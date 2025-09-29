@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Configuraciones del usuario
+  preferences UserPreferences?
+
+  // Relación con eventos
+  events Event[]
+
+  @@map("users")
+}
+
+model UserPreferences {
+  id                    String  @id @default(cuid())
+  userId                String  @unique
+  user                  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Configuraciones de notificaciones
+  reminderMinutesBefore Int     @default(15)
+  voiceEnabled          Boolean @default(true)
+
+  // Configuraciones de voz
+  preferredLanguage     String  @default("es-ES")
+  speechRate           Float   @default(1.0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_preferences")
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime?
+  location    String?
+
+  // Relación con usuario
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Metadatos
+  isAllDay    Boolean  @default(false)
+  isRecurring Boolean  @default(false)
+
+  // Recordatorios
+  reminders   Reminder[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("events")
+}
+
+model Reminder {
+  id       String @id @default(cuid())
+  eventId  String
+  event    Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  // Configuración del recordatorio
+  minutesBefore Int      @default(15)
+  isActive      Boolean  @default(true)
+
+  // Estado del recordatorio
+  wasSent       Boolean  @default(false)
+  sentAt        DateTime?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("reminders")
+}
+
+// Para almacenar conversaciones de voz procesadas
+model VoiceSession {
+  id            String   @id @default(cuid())
+  userId        String
+
+  // Audio y transcripción
+  audioUrl      String?
+  transcription String?
+
+  // Procesamiento
+  intent        String?   // "create_event", "query_schedule", etc.
+  entities      Json?     // Datos extraídos (fecha, hora, título, etc.)
+
+  // Resultado
+  wasProcessed  Boolean  @default(false)
+  resultEventId String?
+
+  createdAt     DateTime @default(now())
+
+  @@map("voice_sessions")
+}
