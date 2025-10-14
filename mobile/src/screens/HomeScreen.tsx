@@ -1,12 +1,42 @@
-import React from 'react';
-import { StyleSheet, Text, View, SafeAreaView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, View, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useFonts, Caveat_400Regular, Caveat_700Bold } from '@expo-google-fonts/caveat';
 import VoiceButton from '../components/VoiceButton';
-import { COLORS, SIZES } from '../utils/constants';
-
+import { useAuth } from '../hooks';
 import { unifiedVoiceService } from '../services/unifiedVoiceService';
+import { theme } from '../theme';
+import { brandStyles } from '../theme/brandStyles';
 
 export default function HomeScreen() {
+  const { user } = useAuth();
+  const [greeting, setGreeting] = useState('¡Hola!');
+
+  const [fontsLoaded] = useFonts({
+    Caveat_400Regular,
+    Caveat_700Bold,
+  });
+
+  useEffect(() => {
+    // Determinar saludo según hora del día
+    const hour = new Date().getHours();
+    let timeGreeting = '¡Hola!';
+
+    if (hour >= 5 && hour < 12) {
+      timeGreeting = '¡Buenos días!';
+    } else if (hour >= 12 && hour < 19) {
+      timeGreeting = '¡Buenas tardes!';
+    } else {
+      timeGreeting = '¡Buenas noches!';
+    }
+
+    setGreeting(timeGreeting);
+  }, []);
+
+  if (!fontsLoaded) {
+    return null;
+  }
   const handleQuickVoice = () => {
     // TODO: Implementar acción rápida de voz
     console.log('Quick voice action');
@@ -27,124 +57,146 @@ export default function HomeScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="auto" />
+    <LinearGradient
+      colors={brandStyles.gradients.home}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradient}
+    >
+      <SafeAreaView style={styles.container}>
+        <StatusBar style="light" />
 
-      <View style={styles.header}>
-        <Text style={styles.greeting}>
-          ¡Hola! 👋
-        </Text>
-        <Text style={styles.title}>Bienvenido a Kaia</Text>
-        <Text style={styles.subtitle}>Tu asistente de agenda inteligente</Text>
-      </View>
-
-      <View style={styles.statsContainer}>
-        {stats.map((stat, index) => (
-          <View key={index} style={styles.statCard}>
-            <Text style={styles.statValue}>{stat.value}</Text>
-            <Text style={styles.statLabel}>{stat.label}</Text>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          {/* Header con branding */}
+          <View style={styles.header}>
+            <View style={styles.logoContainer}>
+              <Text style={styles.logo}>{brandStyles.brandText.name}</Text>
+            </View>
+            <Text style={styles.subtitle}>{brandStyles.brandText.tagline}</Text>
+            <Text style={styles.greeting}>
+              {greeting}, {user?.name || 'Usuario'}
+            </Text>
           </View>
-        ))}
-      </View>
 
-      <View style={styles.quickActions}>
-        <Text style={styles.sectionTitle}>Acción rápida</Text>
-        <Text style={styles.sectionSubtitle}>
-          Presiona para crear un evento por voz
-        </Text>
-        <VoiceButton onPress={handleQuickVoice} />
-      </View>
+          {/* Stats Cards */}
+          <View style={styles.statsContainer}>
+            {stats.map((stat, index) => (
+              <View key={index} style={styles.statCard}>
+                <Text style={styles.statValue}>{stat.value}</Text>
+                <Text style={styles.statLabel}>{stat.label}</Text>
+              </View>
+            ))}
+          </View>
 
-      <View style={styles.tips}>
-        <Text style={styles.sectionTitle}>💡 Tip del día</Text>
-        <Text style={styles.tipText}>
-          Puedes decir "Tengo cita con el dentista mañana a las 3" y Kaia lo agendará automáticamente.
-        </Text>
-      </View>
-    </SafeAreaView>
+          {/* Quick Actions */}
+          <View style={styles.quickActions}>
+            <Text style={styles.sectionTitle}>Acción rápida</Text>
+            <Text style={styles.sectionSubtitle}>
+              Presiona para crear un evento por voz
+            </Text>
+            <VoiceButton onPress={handleQuickVoice} />
+          </View>
+
+          {/* Tips Section */}
+          <View style={styles.tips}>
+            <Text style={styles.sectionTitle}>💡 Tip del día</Text>
+            <Text style={styles.tipText}>
+              Puedes decir "Tengo cita con el dentista mañana a las 3" y Kaia lo agendará automáticamente.
+            </Text>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: 'transparent',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingVertical: theme.spacing.lg,
   },
   header: {
-    padding: 20,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.lg,
     alignItems: 'center',
   },
-  greeting: {
-    fontSize: SIZES.xxlarge,
-    marginBottom: 10,
+  logoContainer: {
+    ...brandStyles.logoContainer,
+    marginBottom: theme.spacing.md,
   },
-  title: {
-    fontSize: SIZES.xxlarge,
-    fontWeight: 'bold',
-    color: COLORS.text.primary,
-    marginBottom: 5,
-  },
+  logo: brandStyles.logo,
   subtitle: {
-    fontSize: SIZES.medium,
-    color: COLORS.text.secondary,
+    ...brandStyles.subtitle,
+    marginBottom: theme.spacing.lg,
+  },
+  greeting: {
+    fontSize: theme.typography.fontSize.xl,
+    color: 'rgba(255, 255, 255, 0.95)',
+    fontWeight: '400',
     textAlign: 'center',
   },
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingHorizontal: 20,
-    marginVertical: 20,
+    paddingHorizontal: theme.spacing.xl,
+    marginVertical: theme.spacing.xl,
   },
   statCard: {
-    backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    padding: theme.spacing.lg,
+    borderRadius: theme.borderRadius.xl,
     alignItems: 'center',
     minWidth: 80,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    ...theme.shadows.md,
   },
   statValue: {
-    fontSize: SIZES.large,
-    fontWeight: 'bold',
-    color: COLORS.primary,
+    fontSize: theme.typography.fontSize.xl,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.primary.main,
   },
   statLabel: {
-    fontSize: SIZES.small,
-    color: COLORS.text.secondary,
-    marginTop: 4,
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.xs,
     textAlign: 'center',
   },
   quickActions: {
-    padding: 20,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.lg,
     alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: SIZES.large,
-    fontWeight: '600',
-    color: COLORS.text.primary,
-    marginBottom: 5,
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: '#FFFFFF',
+    marginBottom: theme.spacing.xs,
   },
   sectionSubtitle: {
-    fontSize: SIZES.medium,
-    color: COLORS.text.secondary,
+    fontSize: theme.typography.fontSize.base,
+    color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: theme.spacing.xl,
   },
   tips: {
-    margin: 20,
-    padding: 20,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
+    marginHorizontal: theme.spacing.xl,
+    marginVertical: theme.spacing.lg,
+    padding: theme.spacing.xl,
+    backgroundColor: '#FFFFFF',
+    borderRadius: theme.borderRadius.xl,
     borderLeftWidth: 4,
-    borderLeftColor: COLORS.primary,
+    borderLeftColor: theme.colors.tertiary.main,
+    ...theme.shadows.md,
   },
   tipText: {
-    fontSize: SIZES.medium,
-    color: COLORS.text.primary,
-    lineHeight: 20,
+    fontSize: theme.typography.fontSize.base,
+    color: theme.colors.text.primary,
+    lineHeight: 22,
   },
 });

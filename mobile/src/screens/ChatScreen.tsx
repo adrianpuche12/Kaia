@@ -8,10 +8,13 @@ import {
   Alert,
   TouchableOpacity,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useFonts, Caveat_400Regular, Caveat_700Bold } from '@expo-google-fonts/caveat';
 import VoiceButton from '../components/VoiceButton';
 import { unifiedVoiceService } from '../services/unifiedVoiceService';
 import { nlpService } from '../services/nlpService';
-import { COLORS, SIZES } from '../utils/constants';
+import { theme } from '../theme';
+import { brandStyles } from '../theme/brandStyles';
 
 interface Message {
   id: string;
@@ -21,6 +24,11 @@ interface Message {
 }
 
 export default function ChatScreen() {
+  const [fontsLoaded] = useFonts({
+    Caveat_400Regular,
+    Caveat_700Bold,
+  });
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -148,6 +156,10 @@ export default function ChatScreen() {
     }, 1000);
   };
 
+  if (!fontsLoaded) {
+    return null;
+  }
+
   const MessageBubble = ({ message }: { message: Message }) => (
     <View
       style={[
@@ -173,107 +185,112 @@ export default function ChatScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.titleContainer}>
-          <Text style={styles.title}>Kaia</Text>
-          {isSpeaking && (
-            <View style={styles.speakingIndicator}>
-              <Text style={styles.speakingText}>🔊 Hablando...</Text>
-              <View style={styles.voiceWave}>
-                <View style={[styles.waveLine, styles.wave1]} />
-                <View style={[styles.waveLine, styles.wave2]} />
-                <View style={[styles.waveLine, styles.wave3]} />
+    <LinearGradient
+      colors={brandStyles.gradients.secondary}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradient}
+    >
+      <SafeAreaView style={styles.container}>
+        {/* Header con branding */}
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <Text style={styles.logo}>{brandStyles.brandText.name}</Text>
+            {isSpeaking && (
+              <View style={styles.speakingIndicator}>
+                <Text style={styles.speakingText}>🔊</Text>
+                <View style={styles.voiceWave}>
+                  <View style={[styles.waveLine, styles.wave1]} />
+                  <View style={[styles.waveLine, styles.wave2]} />
+                  <View style={[styles.waveLine, styles.wave3]} />
+                </View>
               </View>
+            )}
+          </View>
+          <Text style={styles.subtitle}>{brandStyles.brandText.tagline}</Text>
+
+          {/* Voice Controls */}
+          <View style={styles.voiceControls}>
+            <TouchableOpacity
+              style={[styles.voiceToggle, voiceEnabled ? styles.voiceEnabled : styles.voiceDisabled]}
+              onPress={() => setVoiceEnabled(!voiceEnabled)}
+            >
+              <Text style={styles.voiceToggleText}>
+                {voiceEnabled ? '🔊 Voz ON' : '🔇 Voz OFF'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <ScrollView
+          style={styles.messagesContainer}
+          contentContainerStyle={styles.messagesContent}
+        >
+          {messages.map((message) => (
+            <MessageBubble key={message.id} message={message} />
+          ))}
+        </ScrollView>
+
+        <View style={styles.inputContainer}>
+          {!voiceSupported && (
+            <View style={styles.warningContainer}>
+              <Text style={styles.warningText}>
+                ⚠️ Para usar reconocimiento de voz en web, prueba con Chrome o Edge
+              </Text>
             </View>
           )}
-        </View>
-        <Text style={styles.subtitle}>Tu asistente de agenda</Text>
-
-        {/* Voice Controls */}
-        <View style={styles.voiceControls}>
-          <TouchableOpacity
-            style={[styles.voiceToggle, voiceEnabled ? styles.voiceEnabled : styles.voiceDisabled]}
-            onPress={() => setVoiceEnabled(!voiceEnabled)}
-          >
-            <Text style={styles.voiceToggleText}>
-              {voiceEnabled ? '🔊 Voz ON' : '🔇 Voz OFF'}
+          <VoiceButton
+            onPress={isListening ? handleVoiceStop : handleVoiceStart}
+            isListening={isListening}
+          />
+          {isListening && (
+            <Text style={styles.listeningText}>
+              Escuchando... Habla ahora
             </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <ScrollView
-        style={styles.messagesContainer}
-        contentContainerStyle={styles.messagesContent}
-      >
-        {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
-        ))}
-      </ScrollView>
-
-      <View style={styles.inputContainer}>
-        {!voiceSupported && (
-          <View style={styles.warningContainer}>
-            <Text style={styles.warningText}>
-              ⚠️ Para usar reconocimiento de voz en web, prueba con Chrome o Edge
+          )}
+          {!isListening && voiceSupported && (
+            <Text style={styles.instructionText}>
+              Presiona el botón y habla para interactuar con Kaia
             </Text>
-          </View>
-        )}
-        <VoiceButton
-          onPress={isListening ? handleVoiceStop : handleVoiceStart}
-          isListening={isListening}
-        />
-        {isListening && (
-          <Text style={styles.listeningText}>
-            Escuchando... Habla ahora
-          </Text>
-        )}
-        {!isListening && voiceSupported && (
-          <Text style={styles.instructionText}>
-            Presiona el botón y habla para interactuar con Kaia
-          </Text>
-        )}
-      </View>
-    </SafeAreaView>
+          )}
+        </View>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: 'transparent',
   },
   header: {
-    padding: 20,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.lg,
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
   },
-  titleContainer: {
+  logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    ...brandStyles.logoContainer,
+    marginBottom: theme.spacing.md,
   },
-  title: {
-    fontSize: SIZES.xxlarge,
-    fontWeight: 'bold',
-    color: COLORS.text.primary,
-  },
+  logo: brandStyles.logo,
   speakingIndicator: {
-    marginLeft: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: '#E3F2FD',
-    borderRadius: 15,
+    marginLeft: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: theme.borderRadius.lg,
     flexDirection: 'row',
     alignItems: 'center',
   },
   speakingText: {
-    fontSize: SIZES.small,
-    color: COLORS.primary,
-    fontWeight: '600',
-    marginRight: 8,
+    fontSize: theme.typography.fontSize.base,
+    marginRight: theme.spacing.xs,
   },
   voiceWave: {
     flexDirection: 'row',
@@ -282,116 +299,113 @@ const styles = StyleSheet.create({
   },
   waveLine: {
     width: 3,
-    backgroundColor: COLORS.primary,
+    backgroundColor: '#FFFFFF',
     marginHorizontal: 1,
     borderRadius: 2,
   },
   wave1: {
     height: 8,
-    backgroundColor: COLORS.primary,
   },
   wave2: {
     height: 12,
-    backgroundColor: COLORS.secondary,
   },
   wave3: {
     height: 6,
-    backgroundColor: COLORS.primary,
   },
   subtitle: {
-    fontSize: SIZES.medium,
-    color: COLORS.text.secondary,
-    marginTop: 5,
+    ...brandStyles.subtitle,
+    marginBottom: theme.spacing.md,
   },
   voiceControls: {
-    marginTop: 10,
+    marginTop: theme.spacing.sm,
     flexDirection: 'row',
     justifyContent: 'center',
   },
   voiceToggle: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.full,
+    borderWidth: 2,
   },
   voiceEnabled: {
-    backgroundColor: '#E8F5E8',
-    borderColor: '#4CAF50',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: '#FFFFFF',
   },
   voiceDisabled: {
-    backgroundColor: '#FFEBEE',
-    borderColor: '#F44336',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.5)',
   },
   voiceToggleText: {
-    fontSize: SIZES.small,
-    fontWeight: '600',
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: '#FFFFFF',
   },
   messagesContainer: {
     flex: 1,
   },
   messagesContent: {
-    padding: 20,
-    paddingBottom: 40,
+    padding: theme.spacing.xl,
+    paddingBottom: theme.spacing['2xl'],
   },
   messageBubble: {
     maxWidth: '80%',
-    padding: 15,
-    borderRadius: 20,
-    marginVertical: 5,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.xl,
+    marginVertical: theme.spacing.xs,
   },
   userMessage: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: theme.colors.primary.main,
     alignSelf: 'flex-end',
   },
   assistantMessage: {
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#FFFFFF',
     alignSelf: 'flex-start',
+    ...theme.shadows.sm,
   },
   messageText: {
-    fontSize: SIZES.medium,
-    lineHeight: 20,
+    fontSize: theme.typography.fontSize.base,
+    lineHeight: 22,
   },
   userMessageText: {
-    color: 'white',
+    color: '#FFFFFF',
   },
   assistantMessageText: {
-    color: COLORS.text.primary,
+    color: theme.colors.text.primary,
   },
   timestamp: {
-    fontSize: SIZES.small,
-    marginTop: 5,
+    fontSize: theme.typography.fontSize.xs,
+    marginTop: theme.spacing.xs,
     opacity: 0.7,
   },
   inputContainer: {
-    padding: 20,
+    padding: theme.spacing.xl,
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   listeningText: {
-    marginTop: 10,
-    fontSize: SIZES.medium,
-    color: COLORS.secondary,
-    fontWeight: '600',
+    marginTop: theme.spacing.md,
+    fontSize: theme.typography.fontSize.base,
+    color: '#FFFFFF',
+    fontWeight: theme.typography.fontWeight.semibold,
   },
   instructionText: {
-    marginTop: 10,
-    fontSize: SIZES.small,
-    color: COLORS.text.secondary,
+    marginTop: theme.spacing.md,
+    fontSize: theme.typography.fontSize.sm,
+    color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: theme.spacing.xl,
   },
   warningContainer: {
-    backgroundColor: '#FFF3E0',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.md,
     borderLeftWidth: 4,
-    borderLeftColor: '#FF9800',
+    borderLeftColor: theme.colors.tertiary.dark,
   },
   warningText: {
-    fontSize: SIZES.small,
-    color: '#E65100',
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.primary,
     textAlign: 'center',
   },
 });

@@ -39,3 +39,24 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Environment variables
+.env
+.env.local
+.env.test
+
+# Temporary files
+nul
+*.tmp
+*.temp
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+logs/
+*.log
+
+# Package lock (optional, can uncomment if needed)
+# package-lock.json

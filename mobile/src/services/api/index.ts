@@ -1,0 +1,8 @@
+// Exportación centralizada de servicios API
+export { apiClient } from './apiClient';
+export { authAPI } from './authAPI';
+export { eventAPI } from './eventAPI';
+export { mcpAPI } from './mcpAPI';
+export { messageAPI } from './messageAPI';
+export { locationAPI } from './locationAPI';
+export { voiceAPI } from './voiceAPI';

@@ -7,7 +7,10 @@ import {
   SafeAreaView,
   TouchableOpacity,
 } from 'react-native';
-import { COLORS, SIZES } from '../utils/constants';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useFonts, Caveat_400Regular, Caveat_700Bold } from '@expo-google-fonts/caveat';
+import { theme } from '../theme';
+import { brandStyles } from '../theme/brandStyles';
 
 interface Event {
   id: string;
@@ -18,6 +21,11 @@ interface Event {
 }
 
 export default function AgendaScreen() {
+  const [fontsLoaded] = useFonts({
+    Caveat_400Regular,
+    Caveat_700Bold,
+  });
+
   // Datos de ejemplo
   const [events] = useState<Event[]>([
     {
@@ -43,6 +51,10 @@ export default function AgendaScreen() {
     },
   ]);
 
+  if (!fontsLoaded) {
+    return null;
+  }
+
   const EventCard = ({ event }: { event: Event }) => (
     <TouchableOpacity style={styles.eventCard}>
       <View style={styles.eventTime}>
@@ -59,119 +71,128 @@ export default function AgendaScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Mi Agenda</Text>
-        <Text style={styles.subtitle}>
-          {new Date().toLocaleDateString('es-ES', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          })}
-        </Text>
-      </View>
-
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-        {events.length > 0 ? (
-          <>
-            <Text style={styles.sectionTitle}>Próximos eventos</Text>
-            {events.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </>
-        ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>📅</Text>
-            <Text style={styles.emptyTitle}>No hay eventos programados</Text>
-            <Text style={styles.emptySubtitle}>
-              Ve a la pestaña Chat para crear tu primer evento con voz
+    <LinearGradient
+      colors={brandStyles.gradients.primary}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.gradient}
+    >
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          {/* Header con branding */}
+          <View style={styles.header}>
+            <View style={styles.logoContainer}>
+              <Text style={styles.logo}>{brandStyles.brandText.name}</Text>
+            </View>
+            <Text style={styles.subtitle}>{brandStyles.brandText.tagline}</Text>
+            <Text style={styles.dateText}>
+              {new Date().toLocaleDateString('es-ES', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+              })}
             </Text>
           </View>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+
+          {/* Contenido */}
+          <View style={styles.content}>
+            {events.length > 0 ? (
+              <>
+                <Text style={styles.sectionTitle}>Próximos eventos</Text>
+                {events.map((event) => (
+                  <EventCard key={event.id} event={event} />
+                ))}
+              </>
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>📅</Text>
+                <Text style={styles.emptyTitle}>No hay eventos programados</Text>
+                <Text style={styles.emptySubtitle}>
+                  Ve a la pestaña Chat para crear tu primer evento con voz
+                </Text>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: 'transparent',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingVertical: theme.spacing.lg,
   },
   header: {
-    padding: 20,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.lg,
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
   },
-  title: {
-    fontSize: SIZES.xxlarge,
-    fontWeight: 'bold',
-    color: COLORS.text.primary,
+  logoContainer: {
+    ...brandStyles.logoContainer,
+    marginBottom: theme.spacing.md,
   },
+  logo: brandStyles.logo,
   subtitle: {
-    fontSize: SIZES.medium,
-    color: COLORS.text.secondary,
-    marginTop: 5,
+    ...brandStyles.subtitle,
+    marginBottom: theme.spacing.sm,
+  },
+  dateText: {
+    fontSize: theme.typography.fontSize.base,
+    color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
+    textTransform: 'capitalize',
   },
   content: {
-    flex: 1,
-  },
-  contentContainer: {
-    padding: 20,
+    paddingHorizontal: theme.spacing.xl,
   },
   sectionTitle: {
-    fontSize: SIZES.large,
-    fontWeight: '600',
-    color: COLORS.text.primary,
-    marginBottom: 15,
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: '#FFFFFF',
+    marginBottom: theme.spacing.md,
+    marginTop: theme.spacing.lg,
   },
   eventCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     flexDirection: 'row',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    ...theme.shadows.md,
   },
   eventTime: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 15,
+    marginRight: theme.spacing.md,
     minWidth: 60,
   },
   timeText: {
-    fontSize: SIZES.large,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-  },
-  dateText: {
-    fontSize: SIZES.small,
-    color: COLORS.text.secondary,
-    marginTop: 2,
+    fontSize: theme.typography.fontSize.xl,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: theme.colors.primary.main,
   },
   eventDetails: {
     flex: 1,
     justifyContent: 'center',
   },
   eventTitle: {
-    fontSize: SIZES.medium,
-    fontWeight: '600',
-    color: COLORS.text.primary,
-    marginBottom: 4,
+    fontSize: theme.typography.fontSize.base,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
   },
   eventLocation: {
-    fontSize: SIZES.small,
-    color: COLORS.text.secondary,
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
   },
   emptyState: {
     flex: 1,
@@ -181,19 +202,19 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 64,
-    marginBottom: 20,
+    marginBottom: theme.spacing.xl,
   },
   emptyTitle: {
-    fontSize: SIZES.large,
-    fontWeight: '600',
-    color: COLORS.text.primary,
-    marginBottom: 8,
+    fontSize: theme.typography.fontSize.xl,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: '#FFFFFF',
+    marginBottom: theme.spacing.sm,
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: SIZES.medium,
-    color: COLORS.text.secondary,
+    fontSize: theme.typography.fontSize.base,
+    color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: theme.spacing.xl,
   },
 });
