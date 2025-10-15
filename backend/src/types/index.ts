@@ -86,6 +86,7 @@ export interface JWTPayload {
 
 export interface EventDTO {
   id: string;
+  userId?: string;
   title: string;
   description?: string;
   type: string;
@@ -103,8 +104,13 @@ export interface CreateEventDTO {
   type?: string;
   startTime: string | Date;
   endTime?: string | Date;
+  duration?: number;
   location?: string;
   allDay?: boolean;
+  timezone?: string;
+  placeId?: string;
+  participants?: string[];
+  checkConflicts?: boolean;
   reminders?: CreateReminderDTO[];
 }
 
@@ -117,6 +123,12 @@ export interface UpdateEventDTO {
   location?: string;
   allDay?: boolean;
   completed?: boolean;
+  latitude?: number;
+  longitude?: number;
+  category?: string;
+  reminderMinutes?: number;
+  status?: string;
+  attendees?: string[];
 }
 
 // ========================================
@@ -324,11 +336,20 @@ export interface ParsedIntent {
   rawText: string;
 }
 
+export interface NLPRequest {
+  text: string;
+  context?: any;
+}
+
 export interface NLPResponse {
+  originalText?: string;
   intent: string;
   entities: Record<string, any>;
   confidence: number;
-  response: {
+  needsClarification?: boolean;
+  clarificationQuestion?: string;
+  suggestedActions?: string[];
+  response?: {
     text: string;
     tts?: string;
     actions?: Array<{

@@ -98,7 +98,7 @@ export class ReminderService {
    * Obtener recordatorios pendientes del usuario
    */
   async getPendingReminders(userId: string): Promise<Reminder[]> {
-    return await this.reminderRepo.findPending(userId);
+    return await this.reminderRepo.findPending({ userId });
   }
 
   /**
@@ -165,13 +165,13 @@ export class ReminderService {
    * - 1 hora antes
    * - 15 minutos antes
    */
-  async createRemindersForEvent(eventId: string): Promise<Reminder[]> {
+  async createRemindersForEvent(eventId: string, userId: string): Promise<Reminder[]> {
     const event = await this.eventRepo.findById(eventId);
     if (!event) {
       throw new Error('Event not found');
     }
 
-    await this.reminderRepo.createMultipleForEvent(eventId);
+    await this.reminderRepo.createMultipleForEvent(eventId, userId);
 
     // Retornar los recordatorios creados
     return await this.reminderRepo.findByEvent(eventId);
@@ -181,13 +181,13 @@ export class ReminderService {
    * Procesar recordatorios que deben enviarse
    * Este método debe ejecutarse periódicamente (ej: cada minuto)
    */
-  async processRemindersToSend(): Promise<{
+  async processRemindersToSend(userId: string): Promise<{
     sent: number;
     failed: number;
     errors: Array<{ reminderId: string; error: string }>;
   }> {
     const now = new Date();
-    const pendingReminders = await this.reminderRepo.findPending('');
+    const pendingReminders = await this.reminderRepo.findPending({ userId });
 
     // Filtrar solo los que ya deben enviarse
     const remindersToSend = pendingReminders.filter(r => r.remindAt <= now);
@@ -219,8 +219,8 @@ export class ReminderService {
   /**
    * Procesar recordatorios snoozed que ya están listos
    */
-  async processSnoozedReminders(): Promise<Reminder[]> {
-    return await this.reminderRepo.processSnoozed();
+  async processSnoozedReminders(userId: string): Promise<Reminder[]> {
+    return await this.reminderRepo.processSnoozed(userId);
   }
 
   /**

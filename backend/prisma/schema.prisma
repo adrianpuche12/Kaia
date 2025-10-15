@@ -15,19 +15,19 @@ datasource db {
 // ========================================
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  password      String    // Hasheado con bcrypt
-  phone         String?   @unique
-  name          String
-  lastName      String?
-  birthDate     DateTime?
+  id        String    @id @default(cuid())
+  email     String    @unique
+  password  String // Hasheado con bcrypt
+  phone     String?   @unique
+  name      String
+  lastName  String?
+  birthDate DateTime?
 
   // Perfil adicional
-  address       String?
-  city          String?
-  country       String?
-  avatar        String?   // URL del avatar
+  address String?
+  city    String?
+  country String?
+  avatar  String? // URL del avatar
 
   // Onboarding
   onboardingCompleted Boolean @default(false)
@@ -45,68 +45,68 @@ model User {
   mcpExecutions MCPExecution[]
 
   // Relaciones con sistema de IA
-  contexts            Context[]
-  clusters            Cluster[]
-  actions             Action[]
-  interactionLogs     InteractionLog[]
-  patterns            Pattern[]
-  feedbacks           UserFeedback[]
+  contexts        Context[]
+  clusters        Cluster[]
+  actions         Action[]
+  interactionLogs InteractionLog[]
+  patterns        Pattern[]
+  feedbacks       UserFeedback[]
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("users")
 }
 
 model UserPreferences {
-  id              String  @id @default(cuid())
-  userId          String  @unique
-  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Preferencias de Voz
-  voiceEnabled    Boolean @default(true)
-  voiceGender     String  @default("FEMALE") // "MALE" | "FEMALE" | "NEUTRAL"
-  voiceSpeed      Float   @default(1.0)
+  voiceEnabled Boolean @default(true)
+  voiceGender  String  @default("FEMALE") // "MALE" | "FEMALE" | "NEUTRAL"
+  voiceSpeed   Float   @default(1.0)
 
   // Preferencias de Notificaciones
-  pushEnabled     Boolean @default(true)
-  emailEnabled    Boolean @default(false)
-  smsEnabled      Boolean @default(false)
+  pushEnabled            Boolean @default(true)
+  emailEnabled           Boolean @default(false)
+  smsEnabled             Boolean @default(false)
   proactiveAlertsEnabled Boolean @default(true)
   lateWarningsEnabled    Boolean @default(true)
 
   // Preferencias de Alarmas
-  defaultAlarmTone String?
-  snoozeMinutes    Int     @default(5)
+  defaultAlarmTone     String?
+  snoozeMinutes        Int     @default(5)
   gradualVolumeEnabled Boolean @default(true)
 
   // Idioma y Localización
-  language        String  @default("es")
-  timezone        String  @default("America/Argentina/Buenos_Aires")
-  dateFormat      String  @default("DD/MM/YYYY")
-  timeFormat      String  @default("24h")
+  language   String @default("es")
+  timezone   String @default("America/Argentina/Buenos_Aires")
+  dateFormat String @default("DD/MM/YYYY")
+  timeFormat String @default("24h")
 
   // Preferencias de Comunicación
   requireConfirmationBeforeSending Boolean @default(true)
-  autoReplyEnabled                Boolean @default(false)
-  readReceiptsEnabled             Boolean @default(true)
+  autoReplyEnabled                 Boolean @default(false)
+  readReceiptsEnabled              Boolean @default(true)
 
   // Preferencias de Ubicación
-  locationTrackingEnabled Boolean @default(true)
-  geofencingEnabled       Boolean @default(true)
-  proximityThresholdMeters Int    @default(500)
+  locationTrackingEnabled  Boolean @default(true)
+  geofencingEnabled        Boolean @default(true)
+  proximityThresholdMeters Int     @default(500)
 
   // Preferencias de MCPs
-  allowDynamicMCPs    Boolean @default(true)
-  mcpWhitelistedDomains String @default("") // JSON string array
+  allowDynamicMCPs      Boolean @default(true)
+  mcpWhitelistedDomains String  @default("") // JSON string array
 
   // Intereses y Gustos (para personalización)
-  interests       String @default("[]") // JSON array: ["deportes", "música", "tecnología", ...]
+  interests          String @default("[]") // JSON array: ["deportes", "música", "tecnología", ...]
   favoriteCategories String @default("[]") // JSON array de categorías de eventos favoritas
-  customPreferences String @default("{}") // JSON object para preferencias adicionales
+  customPreferences  String @default("{}") // JSON object para preferencias adicionales
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("user_preferences")
 }
@@ -116,74 +116,74 @@ model UserPreferences {
 // ========================================
 
 model Event {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   title       String
   description String?
-  type        String   @default("OTHER") // MEDICAL, MEETING, PERSONAL, WORK, BIRTHDAY, etc.
+  type        String  @default("OTHER") // MEDICAL, MEETING, PERSONAL, WORK, BIRTHDAY, etc.
 
   // Fecha y hora
-  startTime   DateTime
-  endTime     DateTime?
-  allDay      Boolean   @default(false)
-  timezone    String?
+  startTime DateTime
+  endTime   DateTime?
+  allDay    Boolean   @default(false)
+  timezone  String?
 
   // Ubicación
-  location    String?
-  placeId     String?
-  place       Place?    @relation(fields: [placeId], references: [id])
+  location String?
+  placeId  String?
+  place    Place?  @relation(fields: [placeId], references: [id])
 
   // Participantes
   participants String @default("") // JSON string array
 
   // Recordatorios asociados
-  reminders   Reminder[]
+  reminders Reminder[]
 
   // Metadata
-  createdVia  String @default("VOICE") // VOICE, MANUAL, IMPORT, MCP
-  completed   Boolean   @default(false)
-  canceled    Boolean   @default(false)
+  createdVia String  @default("VOICE") // VOICE, MANUAL, IMPORT, MCP
+  completed  Boolean @default(false)
+  canceled   Boolean @default(false)
 
   // Sincronización con calendarios externos
-  externalId  String?
+  externalId     String?
   externalSource String?
 
   // Ubicación relacionada
   locationLogs LocationLog[]
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("events")
 }
 
 model Reminder {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  eventId   String?
-  event     Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId String?
+  event   Event?  @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-  title     String
-  message   String?
+  title   String
+  message String?
 
   // Cuándo recordar
-  remindAt  DateTime
+  remindAt DateTime
 
   // Canal de recordatorio
-  channel   String @default("PUSH") // PUSH, EMAIL, SMS, VOICE
+  channel String @default("PUSH") // PUSH, EMAIL, SMS, VOICE
 
   // Estado
-  sent      Boolean  @default(false)
-  read      Boolean  @default(false)
-  snoozed   Boolean  @default(false)
+  sent        Boolean   @default(false)
+  read        Boolean   @default(false)
+  snoozed     Boolean   @default(false)
   snoozeUntil DateTime?
 
   // Repetición
-  recurring Boolean  @default(false)
+  recurring      Boolean @default(false)
   recurrenceRule String?
 
   createdAt DateTime @default(now())
@@ -197,49 +197,49 @@ model Reminder {
 // ========================================
 
 model Alarm {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  name        String?
-  label       String?
+  name  String?
+  label String?
 
   // Hora de la alarma
-  time        String    // "07:00" (formato 24h)
+  time String // "07:00" (formato 24h)
 
   // Días de la semana activos (JSON)
-  daysActive  String    // {"mon":true,"tue":true,...}
+  daysActive String // {"mon":true,"tue":true,...}
 
   // Configuración de sonido
-  soundType   String @default("DEFAULT") // DEFAULT, MUSIC, VOICE, GENTLE, NATURE
-  musicId     String?
-  musicName   String?
-  musicUrl    String?
+  soundType String  @default("DEFAULT") // DEFAULT, MUSIC, VOICE, GENTLE, NATURE
+  musicId   String?
+  musicName String?
+  musicUrl  String?
 
   // Mensaje personalizado de despertar
   wakeMessage String?
-  readAgenda  Boolean   @default(true)
+  readAgenda  Boolean @default(true)
 
   // Comportamiento
-  vibration   Boolean   @default(true)
-  snooze      Boolean   @default(true)
-  snoozeTime  Int       @default(5)
-  maxSnoozes  Int       @default(3)
+  vibration  Boolean @default(true)
+  snooze     Boolean @default(true)
+  snoozeTime Int     @default(5)
+  maxSnoozes Int     @default(3)
 
   // Volumen gradual
-  gradualVolume Boolean @default(true)
-  volumeStart   Int     @default(30)
-  volumeEnd     Int     @default(70)
-  volumeDuration Int    @default(60)
+  gradualVolume  Boolean @default(true)
+  volumeStart    Int     @default(30)
+  volumeEnd      Int     @default(70)
+  volumeDuration Int     @default(60)
 
   // Estado
-  enabled     Boolean   @default(true)
+  enabled Boolean @default(true)
 
   // Última ejecución
   lastTriggered DateTime?
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("alarms")
 }
@@ -249,78 +249,78 @@ model Alarm {
 // ========================================
 
 model MCP {
-  id            String   @id @default(cuid())
-  name          String
-  type          String   // PRECONFIGURED, DYNAMIC, USER_CREATED
-  category      String   // COMMUNICATION, LOCATION, WEB, MEDIA, PRODUCTIVITY, etc.
-  description   String
-  version       String   @default("1.0.0")
+  id          String @id @default(cuid())
+  name        String
+  type        String // PRECONFIGURED, DYNAMIC, USER_CREATED
+  category    String // COMMUNICATION, LOCATION, WEB, MEDIA, PRODUCTIVITY, etc.
+  description String
+  version     String @default("1.0.0")
 
   // Capabilities (JSON)
-  capabilities  String   // JSON array
+  capabilities String // JSON array
 
   // Schemas (JSON)
-  inputSchema   String   // JSON
-  outputSchema  String   // JSON
+  inputSchema  String // JSON
+  outputSchema String // JSON
 
   // Executor code
-  executorCode  String   // JavaScript/TypeScript code
-  executorType  String   @default("inline")
+  executorCode String // JavaScript/TypeScript code
+  executorType String @default("inline")
 
   // Configuration (JSON)
-  config        String?  // JSON
+  config String? // JSON
 
   // Métricas
-  usageCount    Int      @default(0)
-  successCount  Int      @default(0)
-  failureCount  Int      @default(0)
+  usageCount         Int  @default(0)
+  successCount       Int  @default(0)
+  failureCount       Int  @default(0)
   avgExecutionTimeMs Int?
 
   // Rating
-  rating        Float?
+  rating Float?
 
   // Para MCPs dinámicos
-  generatedBy   String?
-  prompt        String?
+  generatedBy String?
+  prompt      String?
 
   // Relaciones
-  executions    MCPExecution[]
+  executions MCPExecution[]
 
   // Estado
-  enabled       Boolean  @default(true)
-  public        Boolean  @default(false)
+  enabled Boolean @default(true)
+  public  Boolean @default(false)
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("mcps")
 }
 
 model MCPExecution {
-  id          String   @id @default(cuid())
-  mcpId       String
-  mcp         MCP      @relation(fields: [mcpId], references: [id], onDelete: Cascade)
+  id    String @id @default(cuid())
+  mcpId String
+  mcp   MCP    @relation(fields: [mcpId], references: [id], onDelete: Cascade)
 
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Input/Output (JSON)
-  inputData   String   // JSON
-  outputData  String?  // JSON
+  inputData  String // JSON
+  outputData String? // JSON
 
   // Resultado
-  success     Boolean
-  errorMessage String?
+  success         Boolean
+  errorMessage    String?
   executionTimeMs Int?
 
   // Feedback del usuario
-  userFeedback String?  // POSITIVE, NEGATIVE, NEUTRAL
+  userFeedback    String? // POSITIVE, NEGATIVE, NEUTRAL
   feedbackComment String?
 
   // Contexto
   triggeredBy String?
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@map("mcp_executions")
 }
@@ -330,79 +330,79 @@ model MCPExecution {
 // ========================================
 
 model Message {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  contactId   String
-  contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
-  platform    String   // WHATSAPP, EMAIL, SMS
-  direction   String   // INCOMING, OUTGOING
+  platform  String // WHATSAPP, EMAIL, SMS
+  direction String // INCOMING, OUTGOING
 
-  content     String
+  content String
 
   // Para emails
-  subject     String?
+  subject String?
 
   // Para media
-  mediaUrl    String?
-  mediaType   String?
+  mediaUrl  String?
+  mediaType String?
 
   // Status
-  status      String @default("SENT") // SENT, DELIVERED, READ, FAILED
-  read        Boolean  @default(false)
-  readAt      DateTime?
+  status String    @default("SENT") // SENT, DELIVERED, READ, FAILED
+  read   Boolean   @default(false)
+  readAt DateTime?
 
   // Metadata
-  externalId  String?
+  externalId   String?
   errorMessage String?
 
   // Threading
-  threadId    String?
+  threadId String?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("messages")
 }
 
 model Contact {
-  id            String    @id @default(cuid())
-  userId        String
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  deviceId      String?
-  name          String
-  nickname      String?
+  deviceId String?
+  name     String
+  nickname String?
 
   // Teléfonos y emails (JSON arrays)
-  phoneNumbers  String @default("[]")  // JSON array
-  emails        String @default("[]")  // JSON array
+  phoneNumbers String @default("[]") // JSON array
+  emails       String @default("[]") // JSON array
 
   // Avatar
-  avatarUrl     String?
+  avatarUrl String?
 
   // Metadata (JSON)
-  tags          String @default("[]")  // JSON array
-  notes         String?
+  tags  String  @default("[]") // JSON array
+  notes String?
 
   // Estadísticas
   messageCount  Int       @default(0)
   lastContactAt DateTime?
 
   // Integración
-  hasWhatsApp   Boolean   @default(false)
+  hasWhatsApp Boolean @default(false)
 
   // Relaciones
-  messages      Message[]
+  messages Message[]
 
   // Sincronización
-  syncedAt      DateTime?
-  source        String?
+  syncedAt DateTime?
+  source   String?
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("contacts")
 }
@@ -412,9 +412,9 @@ model Contact {
 // ========================================
 
 model LocationLog {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   latitude  Float
   longitude Float
@@ -423,13 +423,13 @@ model LocationLog {
   speed     Float?
 
   // Contexto
-  eventId   String?
-  event     Event?   @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  eventId String?
+  event   Event?  @relation(fields: [eventId], references: [id], onDelete: SetNull)
 
-  action    String?  // ARRIVAL, DEPARTURE, PROXIMITY, CHECK
+  action String? // ARRIVAL, DEPARTURE, PROXIMITY, CHECK
 
   // Address
-  address   String?
+  address String?
 
   createdAt DateTime @default(now())
 
@@ -437,38 +437,38 @@ model LocationLog {
 }
 
 model Place {
-  id            String      @id @default(cuid())
-  userId        String?
-  user          User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  name          String
-  address       String
-  latitude      Float
-  longitude     Float
+  name      String
+  address   String
+  latitude  Float
+  longitude Float
 
   // Google Places
-  placeId       String?     @unique
-  placeType     String?
+  placeId   String? @unique
+  placeType String?
 
   // Cache de información (JSON)
-  openingHours  String?     // JSON
-  phone         String?
-  website       String?
-  rating        Float?
-  priceLevel    Int?
+  openingHours String? // JSON
+  phone        String?
+  website      String?
+  rating       Float?
+  priceLevel   Int?
 
   // Asociación con eventos
-  events        Event[]
+  events Event[]
 
   // Frecuencia
-  visitCount    Int         @default(0)
-  lastVisitAt   DateTime?
+  visitCount  Int       @default(0)
+  lastVisitAt DateTime?
 
   // Sincronización
   lastFetchedAt DateTime?
 
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("places")
 }
@@ -478,29 +478,29 @@ model Place {
 // ========================================
 
 model VoiceSession {
-  id           String   @id @default(cuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  transcript   String
-  intent       String?
-  entities     String?  // JSON
+  transcript String
+  intent     String?
+  entities   String? // JSON
 
-  response     String?
+  response String?
 
-  confidence   Float?
-  successful   Boolean  @default(false)
+  confidence Float?
+  successful Boolean @default(false)
 
-  duration     Int?
+  duration Int?
 
   // Contexto
   previousSessionId String?
-  contextData  String?  // JSON
+  contextData       String? // JSON
 
   // Audio
-  audioUrl     String?
+  audioUrl String?
 
-  createdAt    DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@map("voice_sessions")
 }
@@ -510,12 +510,12 @@ model VoiceSession {
 // ========================================
 
 model AppUsageLog {
-  id        String   @id @default(cuid())
-  userId    String
+  id     String @id @default(cuid())
+  userId String
 
-  action    String
-  screen    String?
-  metadata  String?  // JSON
+  action   String
+  screen   String?
+  metadata String? // JSON
 
   createdAt DateTime @default(now())
 
@@ -527,26 +527,26 @@ model AppUsageLog {
 // ============================================================================
 
 model Context {
-  id              String   @id @default(cuid())
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  entityId        String   @unique
-  entityType      String   // 'TASK' | 'EVENT' | 'APPOINTMENT'
+  entityId   String @unique
+  entityType String // 'TASK' | 'EVENT' | 'APPOINTMENT'
 
   // Las 5 dimensiones (JSON por ahora)
-  temporal        String
-  spatial         String
-  priority        String
-  relational      String
-  intentional     String
+  temporal    String
+  spatial     String
+  priority    String
+  relational  String
+  intentional String
 
-  contextScore    Float    @default(50)
-  version         Int      @default(1)
-  lastUpdated     DateTime @default(now())
+  contextScore Float    @default(50)
+  version      Int      @default(1)
+  lastUpdated  DateTime @default(now())
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId, contextScore])
   @@index([userId, entityType])
@@ -559,25 +559,25 @@ model Context {
 // ============================================================================
 
 model Cluster {
-  id              String   @id @default(cuid())
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  name            String
-  description     String?
-  type            String   // 'PROJECT' | 'ROUTINE' | 'GOAL' | 'CONTEXT_BASED'
+  name        String
+  description String?
+  type        String // 'PROJECT' | 'ROUTINE' | 'GOAL' | 'CONTEXT_BASED'
 
-  color           String?
-  icon            String?
+  color String?
+  icon  String?
 
-  centroid        String?
-  cohesion        Float    @default(0)
-  size            Int      @default(0)
+  centroid String?
+  cohesion Float   @default(0)
+  size     Int     @default(0)
 
-  autoGenerated   Boolean  @default(false)
+  autoGenerated Boolean @default(false)
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId, type])
   @@index([userId, autoGenerated])
@@ -589,33 +589,33 @@ model Cluster {
 // ============================================================================
 
 model Action {
-  id                  String   @id @default(cuid())
-  userId              String
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  triggerId           String
-  triggerType         String
+  triggerId   String
+  triggerType String
 
-  actionType          String
-  targetEntityId      String
-  targetEntityType    String
+  actionType       String
+  targetEntityId   String
+  targetEntityType String
 
-  title               String
-  description         String
-  reasoning           String   // Array de strings en JSON
-  confidence          Float
+  title       String
+  description String
+  reasoning   String // Array de strings en JSON
+  confidence  Float
 
-  isAutomatic         Boolean  @default(false)
+  isAutomatic          Boolean @default(false)
   requiresConfirmation Boolean @default(true)
-  payload             String   // JSON
+  payload              String // JSON
 
-  state               String   @default("PENDING")
+  state String @default("PENDING")
 
-  userFeedback        String?
+  userFeedback String?
 
-  createdAt           DateTime @default(now())
-  executedAt          DateTime?
-  expiresAt           DateTime?
+  createdAt  DateTime  @default(now())
+  executedAt DateTime?
+  expiresAt  DateTime?
 
   @@index([userId, state, createdAt])
   @@index([userId, targetEntityId])
@@ -628,19 +628,19 @@ model Action {
 // ============================================================================
 
 model InteractionLog {
-  id                  String   @id @default(cuid())
-  userId              String
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  action              String
-  entityId            String?
-  entityType          String?
-  duration            Int      // Milisegundos
+  action     String
+  entityId   String?
+  entityType String?
+  duration   Int // Milisegundos
 
-  contextSnapshot     String?  // JSON
-  metadata            String?  // JSON
+  contextSnapshot String? // JSON
+  metadata        String? // JSON
 
-  timestamp           DateTime @default(now())
+  timestamp DateTime @default(now())
 
   @@index([userId, timestamp])
   @@index([userId, action])
@@ -653,19 +653,19 @@ model InteractionLog {
 // ============================================================================
 
 model Pattern {
-  id                  String   @id @default(cuid())
-  userId              String
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  sequence            String   // Secuencia de acciones en JSON
-  frequency           Int      @default(1)
-  confidence          Float    @default(0)
+  sequence   String // Secuencia de acciones en JSON
+  frequency  Int    @default(1)
+  confidence Float  @default(0)
 
-  typicalContext      String?  // JSON
-  lastOccurred        DateTime
+  typicalContext String? // JSON
+  lastOccurred   DateTime
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId, frequency])
   @@index([userId, lastOccurred])
@@ -677,20 +677,20 @@ model Pattern {
 // ============================================================================
 
 model UserFeedback {
-  id                  String   @id @default(cuid())
-  userId              String
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  predictionId        String?
-  predictionType      String
+  predictionId   String?
+  predictionType String
 
-  wasCorrect          Boolean
-  actualAction        String?
-  actualOutcome       String?  // JSON
+  wasCorrect    Boolean
+  actualAction  String?
+  actualOutcome String? // JSON
 
-  comment             String?
+  comment String?
 
-  timestamp           DateTime @default(now())
+  timestamp DateTime @default(now())
 
   @@index([userId, predictionType])
   @@index([predictionId])

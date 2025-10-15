@@ -34,8 +34,8 @@ export class UserController {
       await prisma.userPreferences.update({
         where: { userId },
         data: {
-          ...(notificationsEnabled !== undefined && { notificationsEnabled }),
-          // Aquí podrías agregar locationEnabled si existe en el modelo
+          ...(notificationsEnabled !== undefined && { pushEnabled: notificationsEnabled }),
+          ...(locationEnabled !== undefined && { locationTrackingEnabled: locationEnabled }),
         },
       });
     }

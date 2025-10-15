@@ -186,7 +186,6 @@ router.get('/preferences', authenticate, async (req: any, res) => {
           smsEnabled: false,
           locationTrackingEnabled: true,
           voiceEnabled: true,
-          theme: 'light',
           language: 'es',
           timezone: 'Europe/Madrid',
         },

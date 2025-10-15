@@ -90,7 +90,7 @@ export class EventService {
       location: data.location,
       placeId: data.placeId,
       participants: data.participants || [],
-      createdVia: data.createdVia || 'MANUAL'
+      createdVia: (data.createdVia || 'MANUAL') as 'VOICE' | 'MANUAL' | 'IMPORT' | 'MCP'
     });
 
     // 4. Crear recordatorios automáticos
@@ -188,7 +188,12 @@ export class EventService {
    * Obtener eventos próximos
    */
   async getUpcomingEvents(userId: string, limit?: number): Promise<Event[]> {
-    return await this.eventRepo.findUpcoming(userId, limit);
+    return await this.eventRepo.findUpcoming({
+      userId,
+      limit,
+      excludeCompleted: true,
+      excludeCanceled: true
+    });
   }
 
   /**
@@ -206,14 +211,14 @@ export class EventService {
    * Buscar eventos por tipo
    */
   async getEventsByType(userId: string, type: string): Promise<Event[]> {
-    return await this.eventRepo.findByType(type, userId);
+    return await this.eventRepo.findByType(userId, type);
   }
 
   /**
    * Buscar eventos por ubicación
    */
   async getEventsByLocation(userId: string, location: string): Promise<Event[]> {
-    return await this.eventRepo.findByLocation(location, userId);
+    return await this.eventRepo.findByLocation(userId, location);
   }
 
   /**
@@ -300,7 +305,7 @@ export class EventService {
    */
   private async createDefaultReminders(event: Event): Promise<number> {
     try {
-      await this.reminderRepo.createMultipleForEvent(event.id);
+      await this.reminderRepo.createMultipleForEvent(event.id, event.userId);
       return 3; // 3 recordatorios creados
     } catch (error) {
       console.error('Error creating default reminders:', error);
@@ -317,12 +322,12 @@ export class EventService {
     endTime: Date,
     excludeEventId?: string
   ): Promise<Event[]> {
-    const conflicts = await this.eventRepo.checkConflicts(userId, startTime, endTime);
-
-    // Excluir el evento actual si estamos actualizando
-    if (excludeEventId) {
-      return conflicts.filter(e => e.id !== excludeEventId);
-    }
+    const conflicts = await this.eventRepo.checkConflicts({
+      userId,
+      startTime,
+      endTime,
+      excludeEventId
+    });
 
     return conflicts;
   }

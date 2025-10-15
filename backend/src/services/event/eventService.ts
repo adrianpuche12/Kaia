@@ -129,10 +129,8 @@ export class EventService {
       where.category = filters.category;
     }
 
-    // Filtro por estado
-    if (filters.status) {
-      where.status = filters.status;
-    }
+    // Filtro por estado - removed as status field doesn't exist in schema
+    // Use completed or canceled fields instead if needed
 
     // Búsqueda por texto
     if (filters.searchQuery) {
@@ -183,7 +181,8 @@ export class EventService {
           gte: startOfToday,
           lte: endOfToday,
         },
-        status: 'SCHEDULED',
+        completed: false,
+        canceled: false,
       },
       include: {
         reminders: true,
@@ -209,7 +208,8 @@ export class EventService {
           gte: weekStart,
           lte: weekEnd,
         },
-        status: 'SCHEDULED',
+        completed: false,
+        canceled: false,
       },
       include: {
         reminders: true,
@@ -230,7 +230,8 @@ export class EventService {
         startTime: {
           gte: new Date(),
         },
-        status: 'SCHEDULED',
+        completed: false,
+        canceled: false,
       },
       include: {
         reminders: true,
@@ -295,13 +296,8 @@ export class EventService {
         ...(data.startTime && { startTime }),
         ...(data.endTime && { endTime }),
         ...(data.location !== undefined && { location: data.location }),
-        ...(data.latitude !== undefined && { latitude: data.latitude }),
-        ...(data.longitude !== undefined && { longitude: data.longitude }),
-        ...(data.isAllDay !== undefined && { isAllDay: data.isAllDay }),
-        ...(data.category && { category: data.category }),
-        ...(data.reminderMinutes !== undefined && { reminderMinutes: data.reminderMinutes }),
-        ...(data.status && { status: data.status }),
-        ...(data.attendees !== undefined && { attendees: data.attendees }),
+        ...(data.allDay !== undefined && { allDay: data.allDay }),
+        ...(data.completed !== undefined && { completed: data.completed }),
       },
       include: {
         reminders: true,
@@ -317,14 +313,19 @@ export class EventService {
    * Cancela un evento
    */
   static async cancelEvent(userId: string, eventId: string): Promise<EventDTO> {
-    return this.updateEvent(userId, eventId, { status: 'CANCELLED' });
+    const event = await prisma.event.update({
+      where: { id: eventId },
+      data: { canceled: true },
+      include: { reminders: true },
+    });
+    return this.toDTO(event);
   }
 
   /**
    * Completa un evento
    */
   static async completeEvent(userId: string, eventId: string): Promise<EventDTO> {
-    return this.updateEvent(userId, eventId, { status: 'COMPLETED' });
+    return this.updateEvent(userId, eventId, { completed: true });
   }
 
   /**
@@ -400,25 +401,20 @@ export class EventService {
       userId: event.userId,
       title: event.title,
       description: event.description || undefined,
+      type: event.type,
       startTime: event.startTime,
       endTime: event.endTime,
       location: event.location || undefined,
-      latitude: event.latitude || undefined,
-      longitude: event.longitude || undefined,
-      isAllDay: event.isAllDay,
-      category: event.category,
-      reminderMinutes: event.reminderMinutes,
-      isRecurring: event.isRecurring,
-      recurrenceRule: event.recurrenceRule || undefined,
-      attendees: event.attendees || undefined,
-      status: event.status,
-      createdAt: event.createdAt,
-      updatedAt: event.updatedAt,
+      allDay: event.allDay,
+      completed: event.completed,
       reminders: event.reminders?.map((r: any) => ({
         id: r.id,
-        content: r.content,
+        title: r.title,
+        message: r.message,
         remindAt: r.remindAt,
-        status: r.status,
+        channel: r.channel,
+        sent: r.sent,
+        read: r.read,
       })),
     };
   }

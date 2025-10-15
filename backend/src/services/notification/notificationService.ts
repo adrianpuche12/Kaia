@@ -159,7 +159,7 @@ export class NotificationService {
     await this.sendPushNotification(alarm.userId, {
       title: '⏰ Alarma',
       body: alarm.label || `Alarma programada para las ${alarm.time}`,
-      sound: alarm.sound || 'alarm',
+      sound: 'alarm',
       priority: 'high',
       data: {
         type: 'ALARM',
@@ -243,7 +243,7 @@ export class NotificationService {
     const pendingReminders = await prisma.reminder.findMany({
       where: {
         remindAt: { lte: now },
-        status: 'PENDING',
+        sent: false,
       },
     });
 
@@ -251,7 +251,7 @@ export class NotificationService {
       try {
         await this.sendPushNotification(reminder.userId, {
           title: '🔔 Recordatorio',
-          body: reminder.content,
+          body: reminder.message || reminder.title,
           data: {
             type: 'REMINDER',
             reminderId: reminder.id,
@@ -260,7 +260,7 @@ export class NotificationService {
 
         await prisma.reminder.update({
           where: { id: reminder.id },
-          data: { status: 'SENT' },
+          data: { sent: true },
         });
 
         logger.info('Reminder notification sent', { reminderId: reminder.id });
@@ -282,9 +282,9 @@ export class NotificationService {
 
     for (const alarm of alarmsToTrigger) {
       // Verificar si la alarma aplica hoy
-      if (alarm.daysOfWeek) {
-        const days = JSON.parse(alarm.daysOfWeek);
-        if (!days.includes(currentDay)) {
+      if (alarm.daysActive) {
+        const days = JSON.parse(alarm.daysActive);
+        if (!days[currentDay]) {
           continue;
         }
       }
@@ -304,7 +304,8 @@ export class NotificationService {
           gte: now,
           lte: thirtyMinutesFromNow,
         },
-        status: 'SCHEDULED',
+        completed: false,
+        canceled: false,
       },
     });
 
@@ -313,7 +314,8 @@ export class NotificationService {
         (event.startTime.getTime() - now.getTime()) / (1000 * 60)
       );
 
-      if (minutesUntilEvent <= event.reminderMinutes) {
+      // Send notification 30 minutes before event
+      if (minutesUntilEvent <= 30) {
         try {
           await this.notifyUpcomingEvent(
             event.userId,

@@ -82,8 +82,8 @@ export class EventRepository extends BaseRepository<Event> {
   /**
    * Constructor
    */
-  constructor() {
-    super();
+  constructor(prisma: any) {
+    super(prisma);
   }
 
   // ==========================================================================
@@ -127,7 +127,7 @@ export class EventRepository extends BaseRepository<Event> {
 
     // Notificar a observers (AI system)
     await this.notifyObservers({
-      type: RepositoryEvent.CREATE,
+      type: 'CREATE',
       entityType: 'Event',
       entityId: event.id,
       userId: event.userId,
@@ -190,7 +190,7 @@ export class EventRepository extends BaseRepository<Event> {
 
     // Notificar a observers
     await this.notifyObservers({
-      type: RepositoryEvent.UPDATE,
+      type: 'UPDATE',
       entityType: 'Event',
       entityId: event.id,
       userId: event.userId,
@@ -219,7 +219,7 @@ export class EventRepository extends BaseRepository<Event> {
 
     // Notificar a observers
     await this.notifyObservers({
-      type: RepositoryEvent.DELETE,
+      type: 'DELETE',
       entityType: 'Event',
       entityId: id,
       userId: event.userId,

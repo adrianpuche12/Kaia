@@ -70,8 +70,8 @@ export class ReminderRepository extends BaseRepository<Reminder> {
   /**
    * Constructor
    */
-  constructor() {
-    super();
+  constructor(prisma: any) {
+    super(prisma);
   }
 
   // ==========================================================================
@@ -110,7 +110,7 @@ export class ReminderRepository extends BaseRepository<Reminder> {
 
     // Notificar a observers (AI system)
     await this.notifyObservers({
-      type: RepositoryEvent.CREATE,
+      type: 'CREATE',
       entityType: 'Reminder',
       entityId: reminder.id,
       userId: reminder.userId,
@@ -160,7 +160,7 @@ export class ReminderRepository extends BaseRepository<Reminder> {
 
     // Notificar a observers
     await this.notifyObservers({
-      type: RepositoryEvent.UPDATE,
+      type: 'UPDATE',
       entityType: 'Reminder',
       entityId: reminder.id,
       userId: reminder.userId,
@@ -189,7 +189,7 @@ export class ReminderRepository extends BaseRepository<Reminder> {
 
     // Notificar a observers
     await this.notifyObservers({
-      type: RepositoryEvent.DELETE,
+      type: 'DELETE',
       entityType: 'Reminder',
       entityId: id,
       userId: reminder.userId,

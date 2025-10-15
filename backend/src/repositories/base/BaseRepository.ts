@@ -1,6 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 import { IRepositoryObserver, RepositoryEvent } from './IRepository';
 
+// Re-export RepositoryEvent for use by other repositories
+export { RepositoryEvent };
+
 /**
  * Repositorio base abstracto
  * Todos los repositorios deben extender esta clase
