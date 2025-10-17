@@ -156,6 +156,10 @@ model Event {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([userId, startTime])
+  @@index([userId, type])
+  @@index([userId, completed])
+  @@index([userId, canceled])
   @@map("events")
 }
 
@@ -189,6 +193,8 @@ model Reminder {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([userId, remindAt])
+  @@index([userId, sent])
   @@map("reminders")
 }
 
@@ -241,6 +247,7 @@ model Alarm {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([userId, enabled])
   @@map("alarms")
 }
 
@@ -293,6 +300,8 @@ model MCP {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([enabled, public])
+  @@index([type, category])
   @@map("mcps")
 }
 
@@ -364,6 +373,11 @@ model Message {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([userId, contactId])
+  @@index([userId, platform])
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@index([threadId])
   @@map("messages")
 }
 
@@ -404,6 +418,7 @@ model Contact {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([userId, lastContactAt])
   @@map("contacts")
 }
 
@@ -433,6 +448,8 @@ model LocationLog {
 
   createdAt DateTime @default(now())
 
+  @@index([userId, createdAt])
+  @@index([eventId])
   @@map("location_logs")
 }
 
@@ -470,6 +487,8 @@ model Place {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([userId, visitCount])
+  @@index([placeId])
   @@map("places")
 }
 
@@ -502,6 +521,8 @@ model VoiceSession {
 
   createdAt DateTime @default(now())
 
+  @@index([userId, createdAt])
+  @@index([userId, successful])
   @@map("voice_sessions")
 }
 
@@ -519,6 +540,8 @@ model AppUsageLog {
 
   createdAt DateTime @default(now())
 
+  @@index([userId, createdAt])
+  @@index([userId, action])
   @@map("app_usage_logs")
 }
 

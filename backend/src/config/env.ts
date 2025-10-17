@@ -34,8 +34,10 @@ export const config = {
   twilioAuthToken: process.env.TWILIO_AUTH_TOKEN || '',
   twilioPhoneNumber: process.env.TWILIO_PHONE_NUMBER || '',
 
-  // Redis (opcional)
+  // Redis Cache
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
+  cacheEnabled: process.env.CACHE_ENABLED === 'true',
+  cacheDefaultTtl: parseInt(process.env.CACHE_DEFAULT_TTL || '60', 10),
 
   // Firebase Cloud Messaging
   fcmServerKey: process.env.FCM_SERVER_KEY || '',

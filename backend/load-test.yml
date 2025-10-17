@@ -1,0 +1,224 @@
+# Artillery Load Test Configuration for Kaia API
+# This tests the API endpoints before and after database optimization
+
+config:
+  target: "https://kaia-production.up.railway.app"
+  phases:
+    # Warm-up phase
+    - duration: 30
+      arrivalRate: 5
+      name: "Warm-up"
+    # Ramp-up phase
+    - duration: 60
+      arrivalRate: 10
+      rampTo: 50
+      name: "Ramp-up load"
+    # Sustained load
+    - duration: 120
+      arrivalRate: 50
+      name: "Sustained high load"
+    # Cool-down
+    - duration: 30
+      arrivalRate: 10
+      name: "Cool-down"
+
+  # Environment variables
+  variables:
+    testEmail: "loadtest@example.com"
+    testPassword: "TestLoad123!@#"
+
+  # Plugins
+  plugins:
+    expect: {}
+    metrics-by-endpoint: {}
+
+  # HTTP settings
+  http:
+    timeout: 30
+    maxSockets: 100
+
+  # Performance thresholds
+  ensure:
+    maxErrorRate: 1  # Max 1% error rate
+    p95: 1000        # 95th percentile under 1 second
+    p99: 2000        # 99th percentile under 2 seconds
+
+# Test scenarios
+scenarios:
+  # Scenario 1: Health Check (lightweight)
+  - name: "Health Check"
+    weight: 10
+    flow:
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200
+            - contentType: json
+            - hasProperty: status
+
+  # Scenario 2: API Info
+  - name: "API Info"
+    weight: 10
+    flow:
+      - get:
+          url: "/"
+          expect:
+            - statusCode: 200
+            - contentType: json
+
+  # Scenario 3: User Registration & Authentication
+  - name: "Register and Login"
+    weight: 20
+    flow:
+      # Register new user
+      - post:
+          url: "/api/auth/register"
+          json:
+            email: "user-{{ $randomString() }}@loadtest.com"
+            password: "{{ testPassword }}"
+            name: "LoadTest"
+            lastName: "User"
+          capture:
+            - json: "$.data.tokens.accessToken"
+              as: "authToken"
+          expect:
+            - statusCode: 201
+            - contentType: json
+            - hasProperty: data.tokens.accessToken
+
+      # Get profile
+      - get:
+          url: "/api/auth/profile"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+            - contentType: json
+
+  # Scenario 4: Event Management (tests optimized queries)
+  - name: "Event Operations"
+    weight: 30
+    flow:
+      # Login first
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ testEmail }}"
+            password: "{{ testPassword }}"
+          capture:
+            - json: "$.data.tokens.accessToken"
+              as: "authToken"
+
+      # Create event
+      - post:
+          url: "/api/events"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            title: "Load Test Event {{ $randomString() }}"
+            description: "Testing event creation"
+            type: "MEETING"
+            startTime: "2025-10-20T10:00:00Z"
+            endTime: "2025-10-20T11:00:00Z"
+            location: "Office"
+          capture:
+            - json: "$.data.event.id"
+              as: "eventId"
+          expect:
+            - statusCode: 201
+
+      # List events (tests userId+startTime index)
+      - get:
+          url: "/api/events?startDate=2025-10-01T00:00:00Z&endDate=2025-10-31T23:59:59Z"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+      # Get event by date range (tests optimized query)
+      - get:
+          url: "/api/events/range?startDate=2025-10-15T00:00:00Z&endDate=2025-10-25T23:59:59Z"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+      # Get specific event
+      - get:
+          url: "/api/events/{{ eventId }}"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+      # Update event
+      - put:
+          url: "/api/events/{{ eventId }}"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            title: "Updated Load Test Event"
+          expect:
+            - statusCode: 200
+
+      # Delete event
+      - delete:
+          url: "/api/events/{{ eventId }}"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+  # Scenario 5: Mixed Read-Heavy Operations
+  - name: "Read-Heavy Operations"
+    weight: 30
+    flow:
+      # Login
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ testEmail }}"
+            password: "{{ testPassword }}"
+          capture:
+            - json: "$.data.tokens.accessToken"
+              as: "authToken"
+
+      # Multiple event queries (tests indexes)
+      - get:
+          url: "/api/events"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      - get:
+          url: "/api/events?type=MEETING"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      - get:
+          url: "/api/events/range?startDate=2025-10-01T00:00:00Z&endDate=2025-12-31T23:59:59Z"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      # Messages (if user has messages)
+      - get:
+          url: "/api/messages"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+      # Voice sessions (if any)
+      - get:
+          url: "/api/voice/history"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+
+# Before/After Comparison Notes:
+#
+# BEFORE OPTIMIZATION (Expected):
+# - p95: 400-600ms
+# - p99: 800-1200ms
+# - Errors at 50+ concurrent users
+#
+# AFTER OPTIMIZATION (Expected):
+# - p95: 150-250ms (60% improvement)
+# - p99: 300-500ms (60% improvement)
+# - Stable at 100+ concurrent users

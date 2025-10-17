@@ -7,11 +7,17 @@ import { config } from './config/env';
 import { logger } from './utils/logger';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { generalRateLimiter } from './middleware/rateLimiter';
+import { generalRedisRateLimiter } from './middleware/redisRateLimiter';
+import { RedisClient } from './config/redis';
 import routes from './routes';
 import { swaggerSpec } from './config/swagger';
+import { initSentry, Sentry } from './config/sentry';
 
 // Load environment variables
 dotenv.config();
+
+// Initialize Sentry (must be first)
+initSentry();
 
 const app = express();
 const PORT = config.port;
@@ -66,8 +72,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// Rate limiting (general)
-app.use('/api', generalRateLimiter);
+// Rate limiting (use Redis if available, fallback to memory)
+app.use('/api', (req, res, next) => {
+  if (RedisClient.isReady()) {
+    return generalRedisRateLimiter(req, res, next);
+  }
+  return generalRateLimiter(req, res, next);
+});
 
 // Root route
 app.get('/', (req, res) => {
@@ -89,12 +100,28 @@ app.get('/', (req, res) => {
 });
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', async (req, res) => {
+  const { RedisClient } = await import('./config/redis');
+  const { cacheService } = await import('./services/cache/cacheService');
+
+  const redisHealth = await RedisClient.healthCheck();
+  const redisInfo = await RedisClient.getInfo();
+
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: config.nodeEnv,
+    cache: {
+      enabled: config.cacheEnabled,
+      redis: {
+        connected: redisHealth.healthy,
+        latency: redisHealth.latency,
+        error: redisHealth.error,
+        info: redisInfo,
+      },
+      metrics: cacheService.getMetrics(),
+    },
   });
 });
 
@@ -116,6 +143,9 @@ app.use('/api', routes);
 
 // 404 handler
 app.use(notFoundHandler);
+
+// Sentry error handler (must be before other error handlers but after routes)
+Sentry.setupExpressErrorHandler(app);
 
 // Global error handler (must be last)
 app.use(errorHandler);
