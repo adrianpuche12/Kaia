@@ -69,10 +69,14 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
     >
       <SafeAreaView style={styles.container}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.keyboardView}
+          enabled={Platform.OS === 'ios'}
         >
-          <ScrollView contentContainerStyle={styles.scrollContent}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
             <View style={styles.content}>
               {/* Logo/Header */}
               <View style={styles.header}>
