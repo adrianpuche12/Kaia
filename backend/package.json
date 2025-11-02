@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "prisma migrate deploy && node dist/server.js",
+    "start": "npx prisma migrate resolve --applied 20250928230059_init && prisma migrate deploy && node dist/server.js",
     "postinstall": "prisma generate",
     "migrate:deploy": "prisma migrate deploy",
     "test": "jest",
