@@ -2,7 +2,9 @@
 import { ApiResponse, ApiError } from '../../types';
 import { secureStorage } from '../storage/secureStorage';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001/api';
+// TEMPORAL: Hardcoded URL debido a límite de builds en Expo
+// TODO: Revertir a usar variable de entorno después del 1 de Noviembre 2025
+const API_URL = 'https://kaia-production.up.railway.app/api';
 
 console.log('🌐 API_URL configured as:', API_URL);
 

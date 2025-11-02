@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "bash fix-migrations.sh",
+    "start": "node dist/server.js",
     "postinstall": "prisma generate",
     "migrate:deploy": "prisma migrate deploy",
     "test": "jest",

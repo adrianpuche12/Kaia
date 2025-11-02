@@ -1,5 +1,5 @@
 // Pantalla de Onboarding - Primera vez
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,8 @@ import { theme } from '../theme';
 import { brandStyles } from '../theme/brandStyles';
 import userAPI, { OnboardingData } from '../services/api/userAPI';
 import { useAuth } from '../hooks';
+import { useStore } from '../store/store';
+import { secureStorage } from '../services/storage/secureStorage';
 
 type OnboardingScreenNavigationProp = NativeStackNavigationProp<AuthStackParamList, 'Onboarding'>;
 
@@ -48,10 +50,20 @@ const EVENT_CATEGORIES = [
 ];
 
 const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
-  const { user, setUser } = useAuth();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Ref para detectar si el componente está montado
+  const isMountedRef = useRef(true);
+
+  // Cleanup al desmontar
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Datos del formulario
   const [phone, setPhone] = useState('');
@@ -106,6 +118,9 @@ const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleComplete = async () => {
+    // Verificar si está montado antes de actualizar estado
+    if (!isMountedRef.current) return;
+
     setIsLoading(true);
     setError('');
 
@@ -123,22 +138,38 @@ const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
 
       const response = await userAPI.completeOnboarding(onboardingData);
 
+      // Verificar si aún está montado después de la llamada async
+      if (!isMountedRef.current) return;
+
       console.log('📥 Onboarding response:', response);
 
       if (response.success && response.data) {
         const { user } = response.data;
 
-        if (setUser && user) {
-          setUser(user);
+        if (user) {
+          // Actualizar en secureStorage primero
+          await secureStorage.saveUser(user);
+
+          // Verificar NUEVAMENTE antes de actualizar Zustand
+          if (!isMountedRef.current) return;
+
+          // Usar getState() directo en lugar del hook para evitar warnings
+          useStore.getState().setUser(user);
         }
       } else {
-        setError('Error al completar el onboarding');
+        if (isMountedRef.current) {
+          setError('Error al completar el onboarding');
+        }
       }
     } catch (err: any) {
       console.error('Error completing onboarding:', err);
-      setError(err.response?.data?.error || 'Error al completar el onboarding');
+      if (isMountedRef.current) {
+        setError(err.response?.data?.error || 'Error al completar el onboarding');
+      }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 

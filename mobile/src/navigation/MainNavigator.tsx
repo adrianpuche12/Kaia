@@ -1,10 +1,15 @@
-// Navegador principal con tabs (Home, Agenda, Chat, Alarms)
+// Navegador principal con tabs (Home, Agenda, Chat, Alarms, Contacts)
 import React from 'react';
+import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from '../screens/HomeScreen';
 import AgendaScreen from '../screens/AgendaScreen';
 import ChatScreen from '../screens/ChatScreen';
 import AlarmsScreen from '../screens/AlarmsScreen';
+import ContactsScreen from '../screens/ContactsScreen';
+import ContactDetailScreen from '../screens/ContactDetailScreen';
+import LocationHistoryScreen from '../screens/LocationHistoryScreen';
 import { theme } from '../theme';
 
 export type MainTabParamList = {
@@ -12,9 +17,26 @@ export type MainTabParamList = {
   Agenda: undefined;
   Chat: undefined;
   Alarms: undefined;
+  ContactsStack: undefined;
+};
+
+export type ContactsStackParamList = {
+  ContactsList: undefined;
+  ContactDetail: { contactId?: string };
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
+const ContactsStack = createNativeStackNavigator<ContactsStackParamList>();
+
+// Stack Navigator for Contacts (includes ContactsList and ContactDetail)
+const ContactsStackNavigator: React.FC = () => {
+  return (
+    <ContactsStack.Navigator screenOptions={{ headerShown: false }}>
+      <ContactsStack.Screen name="ContactsList" component={ContactsScreen} />
+      <ContactsStack.Screen name="ContactDetail" component={ContactDetailScreen} />
+    </ContactsStack.Navigator>
+  );
+};
 
 const MainNavigator: React.FC = () => {
   return (
@@ -79,25 +101,40 @@ const MainNavigator: React.FC = () => {
           ),
         }}
       />
+      <Tab.Screen
+        name="ContactsStack"
+        component={ContactsStackNavigator}
+        options={{
+          headerShown: false,
+          title: 'Contactos',
+          tabBarIcon: ({ color, size }) => (
+            <ContactsIcon color={color} size={size} />
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
 };
 
 // Iconos simples usando Text (puedes reemplazarlos con react-native-vector-icons)
 const HomeIcon = ({ color, size }: { color: string; size: number }) => (
-  <span style={{ fontSize: size, color }}>🏠</span>
+  <Text style={{ fontSize: size, color }}>🏠</Text>
 );
 
 const CalendarIcon = ({ color, size }: { color: string; size: number }) => (
-  <span style={{ fontSize: size, color }}>📅</span>
+  <Text style={{ fontSize: size, color }}>📅</Text>
 );
 
 const MessageIcon = ({ color, size }: { color: string; size: number }) => (
-  <span style={{ fontSize: size, color }}>💬</span>
+  <Text style={{ fontSize: size, color }}>💬</Text>
 );
 
 const AlarmIcon = ({ color, size }: { color: string; size: number }) => (
-  <span style={{ fontSize: size, color }}>⏰</span>
+  <Text style={{ fontSize: size, color }}>⏰</Text>
+);
+
+const ContactsIcon = ({ color, size }: { color: string; size: number }) => (
+  <Text style={{ fontSize: size, color }}>👥</Text>
 );
 
 export default MainNavigator;

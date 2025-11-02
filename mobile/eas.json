@@ -1,0 +1,30 @@
+{
+  "cli": {
+    "version": ">= 16.23.1",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://kaia-production.up.railway.app/api"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://kaia-production.up.railway.app/api"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

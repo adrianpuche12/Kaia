@@ -36,8 +36,10 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
     Caveat_700Bold,
   });
 
+  console.log('🔤 LoginScreen - Fonts loaded:', fontsLoaded);
+
   if (!fontsLoaded) {
-    return null;
+    return <Loading fullScreen text="Cargando fuentes..." />;
   }
 
   const handleLogin = async () => {
@@ -60,13 +62,10 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
     navigation.navigate('Register');
   };
 
+  console.log('🎨 LoginScreen - Rendering with gradient colors:', brandStyles.gradients.primary);
+
   return (
-    <LinearGradient
-      colors={brandStyles.gradients.primary}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.gradient}
-    >
+    <View style={[styles.gradient, { backgroundColor: '#FF0000' }]}>
       <SafeAreaView style={styles.container}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -137,7 +136,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
         {isLoading && <Loading fullScreen text="Iniciando sesión..." />}
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 };
 

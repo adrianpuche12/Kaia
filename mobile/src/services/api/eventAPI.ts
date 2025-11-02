@@ -57,6 +57,40 @@ class EventAPI {
   async deleteEvent(id: string): Promise<void> {
     await apiClient.delete(`/events/${id}`);
   }
+
+  // Nuevos endpoints agregados - Fase 1
+  async updateEventStatus(id: string, status: 'pending' | 'completed' | 'cancelled'): Promise<Event> {
+    const response = await apiClient.patch<{ event: Event }>(`/events/${id}/status`, { status });
+    return response.data!.event;
+  }
+
+  async addParticipant(id: string, userId: string): Promise<Event> {
+    const response = await apiClient.post<{ event: Event }>(`/events/${id}/participants`, { userId });
+    return response.data!.event;
+  }
+
+  async removeParticipant(id: string, userId: string): Promise<Event> {
+    const response = await apiClient.delete<{ event: Event }>(`/events/${id}/participants/${userId}`);
+    return response.data!.event;
+  }
+
+  async searchEvents(query: string, filters?: EventFilters): Promise<Event[]> {
+    const response = await apiClient.get<{ events: Event[] }>('/events/search', {
+      q: query,
+      ...filters
+    });
+    return response.data!.events;
+  }
+
+  async bulkCreateEvents(events: CreateEventRequest[]): Promise<Event[]> {
+    const response = await apiClient.post<{ events: Event[] }>('/events/bulk', { events });
+    return response.data!.events;
+  }
+
+  async getMonthCalendar(month: string): Promise<Event[]> {
+    const response = await apiClient.get<{ events: Event[] }>(`/events/calendar/${month}`);
+    return response.data!.events;
+  }
 }
 
 export const eventAPI = new EventAPI();

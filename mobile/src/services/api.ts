@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3001';
+const API_BASE_URL = 'https://kaia-production.up.railway.app';
 
 export class ApiService {
   private baseUrl: string;

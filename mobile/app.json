@@ -1,33 +1,62 @@
 {
   "expo": {
-    "name": "mobile",
+    "name": "Kaia",
     "slug": "mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": ["remote-notification"]
+      }
     },
     "android": {
+      "package": "com.adrianpuche.kaia",
+      "versionCode": 1,
+      "minSdkVersion": 21,
+      "targetSdkVersion": 34,
+      "permissions": [
+        "RECORD_AUDIO",
+        "INTERNET",
+        "CAMERA",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "useNextNotificationsApi": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
-    ]
+      "expo-font",
+      "expo-notifications",
+      [
+        "@jamsch/expo-speech-recognition",
+        {
+          "microphonePermission": "Kaia necesita acceso al micrófono para reconocimiento de voz.",
+          "speechRecognitionPermission": "Kaia necesita acceso al reconocimiento de voz para comandos por voz.",
+          "androidSpeechServicePackages": [
+            "com.google.android.googlequicksearchbox"
+          ]
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "ca76b7eb-16ca-4c80-9e94-e4032ed4c3b4"
+      }
+    }
   }
 }

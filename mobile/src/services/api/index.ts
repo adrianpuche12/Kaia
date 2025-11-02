@@ -6,3 +6,4 @@ export { mcpAPI } from './mcpAPI';
 export { messageAPI } from './messageAPI';
 export { locationAPI } from './locationAPI';
 export { voiceAPI } from './voiceAPI';
+export { contactAPI } from './contactAPI';

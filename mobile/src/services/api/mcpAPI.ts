@@ -73,6 +73,34 @@ class MCPAPI {
     const response = await apiClient.get<{ stats: any }>('/mcps/executions/stats', { mcpId });
     return response.data!.stats;
   }
+
+  // Nuevos endpoints agregados - Fase 1
+  async findByCapability(capability: string): Promise<MCP[]> {
+    const response = await apiClient.get<{ mcps: MCP[] }>(`/mcps/capability/${capability}`);
+    return response.data!.mcps;
+  }
+
+  async getMCPStats(): Promise<{
+    total: number;
+    enabled: number;
+    disabled: number;
+    totalExecutions: number;
+  }> {
+    const response = await apiClient.get<{
+      stats: {
+        total: number;
+        enabled: number;
+        disabled: number;
+        totalExecutions: number;
+      };
+    }>('/mcps/stats');
+    return response.data!.stats;
+  }
+
+  async rateMCP(id: string, rating: number): Promise<MCP> {
+    const response = await apiClient.post<{ mcp: MCP }>(`/mcps/${id}/rate`, { rating });
+    return response.data!.mcp;
+  }
 }
 
 export const mcpAPI = new MCPAPI();

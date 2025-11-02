@@ -13,10 +13,12 @@ import { useFonts, Caveat_400Regular, Caveat_700Bold } from '@expo-google-fonts/
 import VoiceButton from '../components/VoiceButton';
 import { unifiedVoiceService } from '../services/unifiedVoiceService';
 import { nlpService } from '../services/nlpService';
+import { messageAPI } from '../services/api';
 import { theme } from '../theme';
 import { brandStyles } from '../theme/brandStyles';
+import { Message } from '../types';
 
-interface Message {
+interface LocalMessage {
   id: string;
   text: string;
   isUser: boolean;
@@ -29,7 +31,7 @@ export default function ChatScreen() {
     Caveat_700Bold,
   });
 
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<LocalMessage[]>([
     {
       id: '1',
       text: '¡Hola! Soy Kaia, tu asistente de agenda inteligente. Puedes hablarme naturalmente, por ejemplo: "Tengo turno con el dentista mañana a las 3", "Agendar reunión de trabajo para el viernes a las 10", o "¿Qué tengo programado para hoy?". ¡Estoy aquí para ayudarte a organizar tu tiempo!',
@@ -41,6 +43,8 @@ export default function ChatScreen() {
   const [voiceSupported, setVoiceSupported] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [messageStats, setMessageStats] = useState<any>(null);
 
   useEffect(() => {
     // Check voice support on component mount
@@ -57,6 +61,10 @@ export default function ChatScreen() {
       }
     }, 2000);
 
+    // Load conversations and stats
+    loadConversations();
+    loadStats();
+
     // Optional: Auto-speak welcome message after a short delay
     setTimeout(() => {
       if (voiceEnabled && voiceSupported && messages.length > 0) {
@@ -68,8 +76,26 @@ export default function ChatScreen() {
     }, 3000);
   }, []);
 
+  const loadConversations = async () => {
+    try {
+      const convos = await messageAPI.getConversations();
+      setConversations(convos);
+    } catch (error) {
+      console.error('Error loading conversations:', error);
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      const stats = await messageAPI.getStats();
+      setMessageStats(stats);
+    } catch (error) {
+      console.error('Error loading stats:', error);
+    }
+  };
+
   const addMessage = (text: string, isUser: boolean) => {
-    const newMessage: Message = {
+    const newMessage: LocalMessage = {
       id: Date.now().toString(),
       text,
       isUser,
@@ -160,7 +186,7 @@ export default function ChatScreen() {
     return null;
   }
 
-  const MessageBubble = ({ message }: { message: Message }) => (
+  const MessageBubble = ({ message }: { message: LocalMessage }) => (
     <View
       style={[
         styles.messageBubble,
@@ -183,6 +209,36 @@ export default function ChatScreen() {
       </Text>
     </View>
   );
+
+  const StatsPanel = () => {
+    if (!messageStats) return null;
+
+    return (
+      <View style={styles.statsPanel}>
+        <Text style={styles.statsPanelTitle}>Estadísticas de Mensajes</Text>
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{messageStats.total}</Text>
+            <Text style={styles.statLabel}>Total</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{messageStats.sent}</Text>
+            <Text style={styles.statLabel}>Enviados</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{messageStats.received}</Text>
+            <Text style={styles.statLabel}>Recibidos</Text>
+          </View>
+          {messageStats.failed > 0 && (
+            <View style={styles.statItem}>
+              <Text style={[styles.statValue, styles.statError]}>{messageStats.failed}</Text>
+              <Text style={styles.statLabel}>Fallidos</Text>
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  };
 
   return (
     <LinearGradient
@@ -221,6 +277,9 @@ export default function ChatScreen() {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Stats Panel */}
+        <StatsPanel />
 
         <ScrollView
           style={styles.messagesContainer}
@@ -407,5 +466,39 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.sm,
     color: theme.colors.text.primary,
     textAlign: 'center',
+  },
+  statsPanel: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    marginHorizontal: theme.spacing.xl,
+    marginBottom: theme.spacing.md,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+  },
+  statsPanelTitle: {
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: '#FFFFFF',
+    marginBottom: theme.spacing.sm,
+    textAlign: 'center',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: theme.typography.fontSize.xl,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: '#FFFFFF',
+  },
+  statLabel: {
+    fontSize: theme.typography.fontSize.xs,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginTop: theme.spacing.xs,
+  },
+  statError: {
+    color: theme.colors.tertiary.main,
   },
 });

@@ -1,48 +1,55 @@
-import Voice, { SpeechRecognizedEvent, SpeechResultsEvent } from '@react-native-voice/voice';
+import {
+  ExpoSpeechRecognitionModule,
+  useSpeechRecognitionEvent,
+  addSpeechRecognitionListener,
+} from '@jamsch/expo-speech-recognition';
 import * as Speech from 'expo-speech';
 
 export class VoiceService {
   private isListening = false;
   private onResultCallback: ((text: string) => void) | null = null;
   private onErrorCallback: ((error: string) => void) | null = null;
+  private listeners: any[] = [];
 
   constructor() {
-    Voice.onSpeechStart = this.onSpeechStart;
-    Voice.onSpeechRecognized = this.onSpeechRecognized;
-    Voice.onSpeechEnd = this.onSpeechEnd;
-    Voice.onSpeechError = this.onSpeechError;
-    Voice.onSpeechResults = this.onSpeechResults;
+    this.setupListeners();
   }
 
-  // Callbacks de Voice
-  private onSpeechStart = () => {
-    console.log('🎤 Voice: Speech started');
-    this.isListening = true;
-  };
+  private setupListeners() {
+    // Listener para cuando empieza el reconocimiento
+    const startListener = addSpeechRecognitionListener('start', () => {
+      console.log('🎤 Voice: Speech started');
+      this.isListening = true;
+    });
 
-  private onSpeechRecognized = (e: SpeechRecognizedEvent) => {
-    console.log('🎤 Voice: Speech recognized');
-  };
+    // Listener para cuando termina el reconocimiento
+    const endListener = addSpeechRecognitionListener('end', () => {
+      console.log('🎤 Voice: Speech ended');
+      this.isListening = false;
+    });
 
-  private onSpeechEnd = () => {
-    console.log('🎤 Voice: Speech ended');
-    this.isListening = false;
-  };
+    // Listener para resultados
+    const resultListener = addSpeechRecognitionListener('result', (event) => {
+      console.log('🎤 Voice Results:', event.results);
+      if (event.results && event.results.length > 0 && this.onResultCallback) {
+        const transcript = event.results[0]?.transcript;
+        if (transcript) {
+          this.onResultCallback(transcript);
+        }
+      }
+    });
 
-  private onSpeechError = (e: any) => {
-    console.log('❌ Voice Error:', e.error);
-    this.isListening = false;
-    if (this.onErrorCallback) {
-      this.onErrorCallback(e.error?.message || 'Error en reconocimiento de voz');
-    }
-  };
+    // Listener para errores
+    const errorListener = addSpeechRecognitionListener('error', (event) => {
+      console.log('❌ Voice Error:', event.error);
+      this.isListening = false;
+      if (this.onErrorCallback) {
+        this.onErrorCallback(event.error || 'Error en reconocimiento de voz');
+      }
+    });
 
-  private onSpeechResults = (e: SpeechResultsEvent) => {
-    console.log('🎤 Voice Results:', e.value);
-    if (e.value && e.value.length > 0 && this.onResultCallback) {
-      this.onResultCallback(e.value[0]);
-    }
-  };
+    this.listeners = [startListener, endListener, resultListener, errorListener];
+  }
 
   // Métodos públicos
   async startListening(
@@ -58,7 +65,28 @@ export class VoiceService {
     this.onErrorCallback = onError || null;
 
     try {
-      await Voice.start('es-ES'); // Español
+      // Solicitar permisos primero
+      const { granted } = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+
+      if (!granted) {
+        console.log('❌ Permissions not granted');
+        if (onError) {
+          onError('Permisos de micrófono no concedidos');
+        }
+        return;
+      }
+
+      // Iniciar reconocimiento en español
+      ExpoSpeechRecognitionModule.start({
+        lang: 'es-ES',
+        interimResults: true,
+        maxAlternatives: 1,
+        continuous: false,
+        requiresOnDeviceRecognition: false,
+        addsPunctuation: false,
+        contextualStrings: [],
+      });
+
       console.log('🎤 Started listening in Spanish');
     } catch (error) {
       console.error('❌ Error starting voice recognition:', error);
@@ -70,7 +98,7 @@ export class VoiceService {
 
   async stopListening(): Promise<void> {
     try {
-      await Voice.stop();
+      ExpoSpeechRecognitionModule.stop();
       this.isListening = false;
       console.log('🎤 Stopped listening');
     } catch (error) {
@@ -103,7 +131,18 @@ export class VoiceService {
   // Cleanup
   async destroy(): Promise<void> {
     try {
-      await Voice.destroy();
+      // Remover todos los listeners
+      this.listeners.forEach(listener => {
+        if (listener && listener.remove) {
+          listener.remove();
+        }
+      });
+      this.listeners = [];
+
+      // Detener reconocimiento si está activo
+      if (this.isListening) {
+        ExpoSpeechRecognitionModule.stop();
+      }
     } catch (error) {
       console.error('❌ Error destroying voice service:', error);
     }
