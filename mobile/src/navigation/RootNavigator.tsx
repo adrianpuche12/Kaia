@@ -41,7 +41,27 @@ const RootNavigator: React.FC = () => {
         const pushToken = await notificationService.initialize();
         if (pushToken) {
           console.log('📬 Push notifications initialized, token:', pushToken);
-          // TODO: Enviar token al backend para guardar
+
+          // Registrar token en backend si el usuario está autenticado
+          if (savedToken) {
+            try {
+              const result = await notificationService.registerTokenWithBackend(
+                pushToken,
+                savedToken
+              );
+
+              if (result.success) {
+                console.log('✅ Push token registered with backend:', result.tokenId);
+              } else {
+                console.error('❌ Failed to register push token:', result.error);
+              }
+            } catch (error) {
+              console.error('❌ Error registering push token with backend:', error);
+              // No bloqueamos la app si falla el registro
+            }
+          } else {
+            console.log('⏳ User not logged in, token will be registered after login');
+          }
         }
       } catch (error) {
         console.error('Error loading user from storage:', error);

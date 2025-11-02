@@ -2,6 +2,8 @@
 import { StateCreator } from 'zustand';
 import { User, LoginRequest, RegisterRequest } from '../../types';
 import authAPI from '../../services/api/authAPI';
+import { notificationService } from '../../services/notificationService';
+import { secureStorage } from '../../services/storage/secureStorage';
 
 export interface AuthSlice {
   user: User | null;
@@ -34,6 +36,29 @@ export const createAuthSlice: StateCreator<AuthSlice, [], [], AuthSlice> = (set,
         isAuthenticated: true,
         authLoading: false,
       });
+
+      // Registrar push token después de login exitoso
+      try {
+        const pushToken = notificationService.getToken();
+        const accessToken = await secureStorage.getAccessToken();
+
+        if (pushToken && accessToken) {
+          const result = await notificationService.registerTokenWithBackend(
+            pushToken,
+            accessToken
+          );
+
+          if (result.success) {
+            console.log('✅ Push token registered after login:', result.tokenId);
+          } else {
+            console.error('❌ Failed to register push token after login:', result.error);
+          }
+        }
+      } catch (tokenError) {
+        // No bloqueamos el login si falla el registro del token
+        console.error('Error registering push token after login:', tokenError);
+      }
+
       return { success: true };
     } catch (error: any) {
       const errorMessage = error.message || 'Error al iniciar sesión';
