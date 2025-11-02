@@ -95,6 +95,7 @@ app.get('/', (req, res) => {
       messages: '/api/messages',
       location: '/api/location',
       users: '/api/users',
+      notifications: '/api/notifications',
     },
   });
 });

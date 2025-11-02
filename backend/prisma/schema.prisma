@@ -52,6 +52,9 @@ model User {
   patterns        Pattern[]
   feedbacks       UserFeedback[]
 
+  // Push Notifications
+  pushTokens PushToken[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -109,6 +112,48 @@ model UserPreferences {
   updatedAt DateTime @updatedAt
 
   @@map("user_preferences")
+}
+
+// ========================================
+//  PUSH NOTIFICATIONS
+// ========================================
+
+model PushToken {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Expo Push Token
+  token String @unique
+
+  // Device Info
+  deviceId   String?
+  deviceName String?
+  deviceType String? // "android" | "ios"
+  appVersion String?
+  osVersion  String?
+  platform   String? // "mobile" | "web"
+
+  // Status
+  active    Boolean   @default(true)
+  lastUsed  DateTime  @default(now())
+  expiresAt DateTime?
+
+  // Notification Preferences (puede sobrescribir preferencias globales)
+  notificationSettings String? // JSON: { "events": true, "reminders": true, "alarms": true }
+
+  // Error tracking
+  failureCount Int       @default(0)
+  lastError    String?
+  lastErrorAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, active])
+  @@index([token])
+  @@index([userId, lastUsed])
+  @@map("push_tokens")
 }
 
 // ========================================
