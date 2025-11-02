@@ -18,7 +18,7 @@ const registerTokenSchema = z.object({
 const sendNotificationSchema = z.object({
   title: z.string().min(1).max(100),
   body: z.string().min(1).max(300),
-  data: z.record(z.any()).optional(),
+  data: z.record(z.string(), z.any()).optional(),
   priority: z.enum(['default', 'normal', 'high']).optional(),
   badge: z.number().optional(),
 });

@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { notificationController } from '../controllers/notification.controller';
-import { authMiddleware } from '../middleware/auth.middleware';
+import { authenticate } from '../middleware/authMiddleware';
 
 const router = Router();
 
 // Todas las rutas requieren autenticación
-router.use(authMiddleware);
+router.use(authenticate);
 
 /**
  * @swagger
