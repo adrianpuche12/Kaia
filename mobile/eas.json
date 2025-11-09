@@ -1,7 +1,6 @@
 {
   "cli": {
-    "version": ">= 16.23.1",
-    "appVersionSource": "remote"
+    "version": ">= 16.23.1"
   },
   "build": {
     "development": {
@@ -11,14 +10,26 @@
     "preview": {
       "distribution": "internal",
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
       },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://kaia-production.up.railway.app/api"
       }
     },
     "production": {
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://kaia-production.up.railway.app/api"
+      }
+    },
+    "production-aab": {
       "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://kaia-production.up.railway.app/api"
       }

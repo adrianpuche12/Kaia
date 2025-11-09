@@ -2,7 +2,7 @@
   "expo": {
     "name": "Kaia",
     "slug": "mobile",
-    "version": "1.0.0",
+    "version": "1.1.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -20,7 +20,7 @@
     },
     "android": {
       "package": "com.adrianpuche.kaia",
-      "versionCode": 1,
+      "versionCode": 5,
       "minSdkVersion": 21,
       "targetSdkVersion": 34,
       "permissions": [
@@ -34,7 +34,11 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "useNextNotificationsApi": true
+      "useNextNotificationsApi": true,
+      "navigationBar": {
+        "visible": "immersive",
+        "backgroundColor": "#ffffff"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -42,6 +46,7 @@
     "plugins": [
       "expo-font",
       "expo-notifications",
+      "expo-navigation-bar",
       [
         "@jamsch/expo-speech-recognition",
         {
