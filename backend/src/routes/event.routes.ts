@@ -18,6 +18,12 @@ router.post('/',
   EventController.createEvent
 );
 
+// Voice command - invalidate cache
+router.post('/voice-command',
+  invalidateCache(['events:user:{userId}:*']),
+  EventController.processVoiceCommand
+);
+
 // Read operations - with cache
 router.get('/',
   cacheMiddleware({ ttl: 60, keyGenerator: userCacheKey('events') }),

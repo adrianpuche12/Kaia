@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts, Caveat_400Regular, Caveat_700Bold } from '@expo-google-fonts/caveat';
+import { ExpoSpeechRecognitionModule, addSpeechRecognizedListener } from '@jamsch/expo-speech-recognition';
+import * as Speech from 'expo-speech';
 import { theme } from '../theme';
 import { brandStyles } from '../theme/brandStyles';
 import { eventAPI } from '../services/api';
@@ -28,6 +30,11 @@ export default function AgendaScreen() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedView, setSelectedView] = useState<'today' | 'week' | 'all'>('today');
+
+  // Voice command states
+  const [isRecording, setIsRecording] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState('');
 
   useEffect(() => {
     loadEvents();
@@ -167,6 +174,90 @@ export default function AgendaScreen() {
     }
   };
 
+  // Voice command functions
+  const handleVoiceCommand = async () => {
+    try {
+      // 1. Request permissions
+      const { granted } = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      if (!granted) {
+        Alert.alert('Permiso necesario', 'Necesitamos acceso al micrófono para escuchar tu comando de voz');
+        return;
+      }
+
+      // 2. Start recording
+      setIsRecording(true);
+      setVoiceTranscript('');
+
+      // 3. Setup listener
+      const listener = addSpeechRecognizedListener((event) => {
+        if (event.isFinal && event.results[0]?.transcript) {
+          setVoiceTranscript(event.results[0].transcript);
+        }
+      });
+
+      // 4. Start recognition
+      await ExpoSpeechRecognitionModule.start({
+        lang: 'es-ES',
+        interimResults: true,
+        maxAlternatives: 1,
+        continuous: false,
+      });
+
+      // 5. Auto-stop after 5 seconds
+      setTimeout(async () => {
+        await ExpoSpeechRecognitionModule.stop();
+        setIsRecording(false);
+        listener.remove();
+
+        // Process the command if we got a transcript
+        if (voiceTranscript) {
+          await processVoiceCommand(voiceTranscript);
+        } else {
+          Alert.alert('No se escuchó nada', 'Por favor intenta de nuevo');
+        }
+      }, 5000);
+
+    } catch (error) {
+      console.error('Voice command error:', error);
+      setIsRecording(false);
+      Alert.alert('Error', 'No se pudo iniciar el reconocimiento de voz');
+    }
+  };
+
+  const processVoiceCommand = async (transcript: string) => {
+    try {
+      setIsProcessing(true);
+
+      // Call API to process voice command
+      const result = await eventAPI.processVoiceCommand(transcript);
+
+      // Speak confirmation
+      Speech.speak(result.confirmation, {
+        language: 'es-ES',
+        rate: 0.9,
+      });
+
+      // Show success message
+      Alert.alert(
+        '✅ Evento creado',
+        `${result.event.title}\n\nConfianza: ${result.aiMetrics.confidence}%`,
+        [{ text: 'OK', onPress: () => loadEvents() }]
+      );
+
+      // Reload events
+      await loadEvents();
+
+    } catch (error: any) {
+      console.error('Process voice command error:', error);
+      Speech.speak('Lo siento, no pude procesar tu comando', {
+        language: 'es-ES',
+      });
+      Alert.alert('Error', error.message || 'No se pudo procesar el comando de voz');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   if (!fontsLoaded) {
     return null;
   }
@@ -221,6 +312,38 @@ export default function AgendaScreen() {
                 month: 'long',
               })}
             </Text>
+          </View>
+
+          {/* Voice Command Button */}
+          <View style={styles.voiceButtonContainer}>
+            <TouchableOpacity
+              style={[
+                styles.voiceButton,
+                (isRecording || isProcessing) && styles.voiceButtonActive
+              ]}
+              onPress={handleVoiceCommand}
+              disabled={isRecording || isProcessing}
+            >
+              {isRecording ? (
+                <View style={styles.recordingIndicator}>
+                  <View style={styles.recordingDot} />
+                  <Text style={styles.voiceButtonText}>Escuchando...</Text>
+                </View>
+              ) : isProcessing ? (
+                <>
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <Text style={styles.voiceButtonText}>Procesando...</Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.voiceButtonIcon}>🎤</Text>
+                  <Text style={styles.voiceButtonText}>Crear evento por voz</Text>
+                </>
+              )}
+            </TouchableOpacity>
+            {voiceTranscript && !isProcessing && (
+              <Text style={styles.transcriptText}>"{voiceTranscript}"</Text>
+            )}
           </View>
 
           {/* Botones de Prueba de Notificaciones */}
@@ -499,5 +622,51 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.sm,
     fontWeight: theme.typography.fontWeight.semibold,
     color: '#FFFFFF',
+  },
+  voiceButtonContainer: {
+    paddingHorizontal: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
+    alignItems: 'center',
+  },
+  voiceButton: {
+    backgroundColor: theme.colors.primary.main,
+    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
+    borderRadius: theme.borderRadius.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.md,
+    width: '100%',
+    ...theme.shadows.lg,
+  },
+  voiceButtonActive: {
+    backgroundColor: theme.colors.secondary.main,
+  },
+  voiceButtonIcon: {
+    fontSize: 28,
+  },
+  voiceButtonText: {
+    fontSize: theme.typography.fontSize.lg,
+    fontWeight: theme.typography.fontWeight.bold,
+    color: '#FFFFFF',
+  },
+  recordingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+  },
+  recordingDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#FF0000',
+  },
+  transcriptText: {
+    marginTop: theme.spacing.md,
+    fontSize: theme.typography.fontSize.base,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
 });

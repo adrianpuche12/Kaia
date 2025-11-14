@@ -2,7 +2,7 @@
   "expo": {
     "name": "Kaia",
     "slug": "mobile",
-    "version": "1.1.2",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -34,11 +34,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "useNextNotificationsApi": true,
-      "navigationBar": {
-        "visible": "immersive",
-        "backgroundColor": "#ffffff"
-      }
+      "useNextNotificationsApi": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -46,7 +42,6 @@
     "plugins": [
       "expo-font",
       "expo-notifications",
-      "expo-navigation-bar",
       [
         "@jamsch/expo-speech-recognition",
         {

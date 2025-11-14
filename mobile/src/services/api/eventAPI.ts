@@ -91,6 +91,27 @@ class EventAPI {
     const response = await apiClient.get<{ events: Event[] }>(`/events/calendar/${month}`);
     return response.data!.events;
   }
+
+  async processVoiceCommand(transcript: string): Promise<{
+    event: Event;
+    confirmation: string;
+    aiMetrics: {
+      confidence: number;
+      tokensUsed: number;
+      processingTime: number;
+    };
+  }> {
+    const response = await apiClient.post<{
+      event: Event;
+      confirmation: string;
+      aiMetrics: {
+        confidence: number;
+        tokensUsed: number;
+        processingTime: number;
+      };
+    }>('/events/voice-command', { transcript });
+    return response.data!;
+  }
 }
 
 export const eventAPI = new EventAPI();

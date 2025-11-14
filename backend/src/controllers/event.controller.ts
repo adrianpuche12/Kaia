@@ -1,6 +1,7 @@
 // Controlador de eventos
 import { Request, Response } from 'express';
 import { EventService } from '../services/event/eventService';
+import { AIService } from '../services/AIService';
 import { successResponse } from '../utils/helpers';
 import { asyncHandler } from '../middleware/errorHandler';
 import { HTTP_STATUS } from '../config/constants';
@@ -142,6 +143,70 @@ export class EventController {
 
     res.status(HTTP_STATUS.OK).json(
       successResponse(null, 'Evento eliminado')
+    );
+  });
+
+  /**
+   * POST /api/events/voice-command
+   * Procesa comando de voz y crea evento
+   */
+  static processVoiceCommand = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user!.id;
+    const { transcript } = req.body;
+
+    if (!transcript || typeof transcript !== 'string') {
+      res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        message: 'El campo transcript es requerido'
+      });
+      return;
+    }
+
+    // 1. Procesar comando con IA
+    const aiService = new AIService();
+    const processed = await aiService.processVoiceCommand({
+      transcript,
+      userId,
+      currentDate: new Date()
+    });
+
+    if (!processed.success || !processed.eventInfo) {
+      res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        message: processed.message,
+        error: processed.error,
+        tokensUsed: processed.tokensUsed,
+        processingTime: processed.processingTime
+      });
+      return;
+    }
+
+    // 2. Crear evento en base de datos
+    const eventInfo = processed.eventInfo;
+    const event = await EventService.createEvent(userId, {
+      title: eventInfo.title,
+      description: eventInfo.description || undefined,
+      type: eventInfo.type,
+      startTime: eventInfo.parsedDate!,
+      endTime: eventInfo.parsedDate,
+      allDay: !eventInfo.hasTime,
+      location: eventInfo.location,
+      participants: eventInfo.participants
+    });
+
+    // 3. Generar confirmación
+    const confirmation = await aiService.generateConfirmation(eventInfo);
+
+    res.status(HTTP_STATUS.CREATED).json(
+      successResponse({
+        event,
+        confirmation,
+        aiMetrics: {
+          confidence: eventInfo.confidence,
+          tokensUsed: processed.tokensUsed,
+          processingTime: processed.processingTime
+        }
+      }, 'Evento creado desde comando de voz')
     );
   });
 }
