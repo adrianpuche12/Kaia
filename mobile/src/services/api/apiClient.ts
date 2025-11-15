@@ -1,10 +1,10 @@
 // Cliente HTTP base usando fetch
 import { ApiResponse, ApiError } from '../../types';
 import { secureStorage } from '../storage/secureStorage';
+import Constants from 'expo-constants';
 
-// TEMPORAL: Hardcoded URL debido a límite de builds en Expo
-// TODO: Revertir a usar variable de entorno después del 1 de Noviembre 2025
-const API_URL = 'https://kaia-production.up.railway.app/api';
+// Usar variable de entorno de Expo
+const API_URL = Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL || 'http://62.171.160.238:3003/api';
 
 console.log('🌐 API_URL configured as:', API_URL);
 
