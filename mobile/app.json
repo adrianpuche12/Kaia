@@ -34,7 +34,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "useNextNotificationsApi": true
+      "useNextNotificationsApi": true,
+      "usesCleartextTraffic": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
