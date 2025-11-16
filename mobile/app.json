@@ -2,7 +2,7 @@
   "expo": {
     "name": "Kaia",
     "slug": "mobile",
-    "version": "1.2.0",
+    "version": "1.3.5",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -20,7 +20,7 @@
     },
     "android": {
       "package": "com.adrianpuche.kaia",
-      "versionCode": 5,
+      "versionCode": 6,
       "minSdkVersion": 21,
       "targetSdkVersion": 34,
       "permissions": [
@@ -35,7 +35,17 @@
         "backgroundColor": "#ffffff"
       },
       "useNextNotificationsApi": true,
-      "usesCleartextTraffic": true
+      "usesCleartextTraffic": true,
+      "networkSecurityConfig": {
+        "cleartextTraffic": true,
+        "domainConfig": [
+          {
+            "domain": "62.171.160.238",
+            "includeSubdomains": false,
+            "cleartextTrafficPermitted": true
+          }
+        ]
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"

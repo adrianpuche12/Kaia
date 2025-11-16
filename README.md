@@ -1,9 +1,9 @@
 # 🤖 Kaia - Asistente Personal Inteligente por Voz
 
-**Estado:** ✅ **MVP 100% COMPLETADO** + **PRODUCTION-READY**
-**Versión:** 1.0.0
+**Estado:** ✅ **v1.1.2 EN PRODUCCIÓN** + **PRODUCTION-READY**
+**Versión:** 1.1.2 (Stable)
 **Fecha de Finalización MVP:** 18 de Octubre, 2025 (Día 30)
-**Última actualización:** 22 de Octubre, 2025
+**Última actualización:** 9 de Noviembre, 2025
 
 ---
 
@@ -31,23 +31,24 @@
 
 ```yaml
 ═══════════════════════════════════════════════════════
- KAIA MVP - 100% COMPLETADO
+ KAIA v1.1.2 - EN PRODUCCIÓN
 ═══════════════════════════════════════════════════════
 
- Desarrollo:        30 días (6-18 Oct 2025) ✅
+ Desarrollo MVP:    30 días (6-18 Oct 2025) ✅
+ Post-MVP:          21 días (19 Oct - 9 Nov 2025) ✅
 
- Backend:           38 endpoints ✅
- Mobile:            7 pantallas + APK ✅
+ Backend:           88 endpoints ✅
+ Mobile:            10 pantallas + APK ✅
  Database:          PostgreSQL + 23 índices ✅
  Cache:             Redis (60-80% hit rate) ✅
  Testing:           52 tests automatizados ✅
  Deployment:        Railway (production) ✅
  Monitoring:        UptimeRobot (24/7) ✅
  Optimization:      90% performance improvement ✅
- Documentation:     46 docs organizados ✅
+ Documentation:     Organizada y actualizada ✅
 
  Estado:            PRODUCTION-READY ✅
- Próximo:           Fase 2 - Growth & Scaling
+ Próximo:           Google Play Store + iOS
 
 ═══════════════════════════════════════════════════════
 ```
@@ -62,8 +63,8 @@ Código:
   Total:             ~20,000 líneas
 
 API:
-  Endpoints:         38 implementados
-  Swagger Docs:      61 documentados
+  Endpoints:         88 implementados
+  Swagger Docs:      88 documentados
   Performance:       15-18ms avg response time
   Uptime:            99.9%+
 
@@ -89,12 +90,12 @@ Kaia/
 
 **⚠️ IMPORTANTE - DOCUMENTACIÓN COMPLETA:**
 
-La **documentación completa del proyecto** (46 documentos organizados) está en **Obsidian Vault**:
-- **Ubicación:** `C:\Users\jorge\OneDrive\Desktop\OneDrive\Documentos\Obsidian Vault\Kaia\`
-- **Archivo principal:** `DOCUMENTACION.md` - 🔴 **FUENTE DE VERDAD** - Lee este archivo primero
+La **documentación completa del proyecto** está en **Obsidian Vault**:
+- **Ubicación:** `C:\Users\jorge\OneDrive\Desktop\OneDrive\Documentos\Obsidian Vault\Proyecto Kaia app Mobile\`
 - **Punto de entrada:** `00. README - INICIO AQUÍ.md`
+- **Estado:** Reorganizada (9 Nov 2025)
 
-Este repositorio contiene SOLO el código y documentación técnica mínima necesaria para desarrollo.
+Este repositorio contiene el código y documentación técnica. Ver `docs/` para guías específicas.
 
 ---
 
@@ -133,7 +134,7 @@ Error Tracking:    Sentry
 Monitoring:        UptimeRobot (24/7)
 ```
 
-### API Endpoints (38 implementados)
+### API Endpoints (88 implementados)
 
 | Endpoint | Métodos | Descripción | Status |
 |----------|---------|-------------|--------|
@@ -147,6 +148,8 @@ Monitoring:        UptimeRobot (24/7)
 | `/api/location` | GET, POST | Ubicación y lugares | ✅ |
 | `/api/voice` | POST, GET | Comandos de voz | ✅ |
 | `/api/users` | GET, PUT | Usuarios y preferencias | ✅ |
+| `/api/contacts` | GET, POST, PUT, DELETE | Gestión de contactos | ✅ |
+| `/api/notifications` | POST | Push notifications | ✅ |
 
 **Ver documentación completa:** https://kaia-production.up.railway.app/api/docs
 
@@ -204,7 +207,7 @@ UI:                Custom components + React Native Paper
 Voice:             @jamsch/expo-speech-recognition
 ```
 
-### Pantallas Implementadas (7)
+### Pantallas Implementadas (10)
 
 1. **LoginScreen** - Inicio de sesión
 2. **RegisterScreen** - Registro de usuario con validación
@@ -213,19 +216,23 @@ Voice:             @jamsch/expo-speech-recognition
 5. **AgendaScreen** - Vista de eventos y calendario
 6. **AlarmsScreen** - Gestión de alarmas
 7. **ChatScreen** - Interfaz de comandos de voz
+8. **ContactsScreen** - Gestión de contactos
+9. **ContactDetailScreen** - Detalle de contacto
+10. **LocationHistoryScreen** - Historial de ubicaciones
 
 ### Android APK
 
 ```yaml
 Status:            ✅ DISPONIBLE
 Platform:          Android (Internal Distribution)
-Build Date:        18 Oct 2025
-Build ID:          8345a8ea-847e-4372-9068-4e4876fa091c
-Download:          https://expo.dev/accounts/adrianpuche/projects/mobile/builds/8345a8ea-847e-4372-9068-4e4876fa091c
-Distribution:      Link + QR Code
+Version:           v1.1.2 (Stable)
+Build Date:        9 Nov 2025
+Build ID:          4DknyoTKroRnpk3iPJiK8m
+Download:          https://github.com/adrianpuche12/Kaia/releases/latest
+Distribution:      GitHub Releases + Kaia Web
 ```
 
-**Ver guía completa:** Ver documentación en Obsidian Vault
+**Ver guía completa:** `docs/mobile/APK_DISTRIBUCION.md` y `docs/mobile/EAS_BUILD_GUIDE.md`
 
 ### Instalación Mobile
 
@@ -336,11 +343,11 @@ Railway:           ✅ ACTIVO
 
 **Estructura de carpetas en Obsidian:**
 ```
-📁 Kaia/ (46 documentos organizados)
-├── 📄 DOCUMENTACION.md 🔴 (FUENTE DE VERDAD)
+📁 Proyecto Kaia app Mobile/ (Reorganizado 9 Nov 2025)
 ├── 📄 00. README - INICIO AQUÍ.md
 ├── 📄 01. URLS E INFRAESTRUCTURA.md
-├── 📄 02. TAREAS PENDIENTES - ACTUALIZADO.md
+├── 📄 ROADMAP_POST_MVP.md 🆕
+├── 📄 PUSH_NOTIFICATIONS_SUMMARY.md 🆕
 │
 ├── 📁 01. INFORMACIÓN GENERAL/
 ├── 📁 02. ARQUITECTURA/
@@ -349,10 +356,9 @@ Railway:           ✅ ACTIVO
 ├── 📁 05. DEPLOYMENT Y OPS/
 ├── 📁 06. TESTING Y OPTIMIZACIÓN/
 ├── 📁 07. MOBILE/
-├── 📁 08. PROGRESO DIARIO (DIA 1-30)/
 ├── 📁 09. BUSINESS Y ANÁLISIS/
-├── 📁 10. GUÍAS/
-└── 📁 FASE 2 - Scaling y Ecosistema/
+├── 📁 FASE 2 - Scaling y Ecosistema/
+└── 📁 _ARCHIVO - Histórico MVP/ (35 docs archivados)
 ```
 
 ---
@@ -363,7 +369,7 @@ Railway:           ✅ ACTIVO
 
 ```yaml
 Backend (100%):
-  ✅ 38 endpoints funcionales
+  ✅ 88 endpoints funcionales
   ✅ Authentication (JWT + Refresh)
   ✅ Events, Reminders, Alarms
   ✅ Voice commands (NLP)
@@ -371,13 +377,16 @@ Backend (100%):
   ✅ Location (Google Maps)
   ✅ MCPs (Master Control Programs)
   ✅ User management
+  ✅ Contacts management
+  ✅ Push notifications
 
 Mobile (100%):
-  ✅ 7 pantallas completas
-  ✅ API integration
+  ✅ 10 pantallas completas
+  ✅ API integration (88 endpoints)
   ✅ State management
   ✅ Navigation
-  ✅ Android APK distribuido
+  ✅ Android APK distribuido (v1.1.2)
+  ✅ Push notifications
 
 Database (100%):
   ✅ PostgreSQL 15
@@ -406,10 +415,11 @@ Testing (100%):
   ✅ Load testing exhaustivo
 
 Documentation (100%):
-  ✅ 46 docs en Obsidian (organizados)
-  ✅ Swagger: 61 endpoints
-  ✅ README professional
+  ✅ Docs en Obsidian (reorganizadas 9 Nov 2025)
+  ✅ Swagger: 88 endpoints
+  ✅ README actualizado
   ✅ Architecture completa
+  ✅ Deployment guides (Redis, Railway)
 ```
 
 ---
@@ -421,10 +431,10 @@ Documentation (100%):
 - Fix bugs menores si aparecen
 
 ### Corto Plazo (2-4 Semanas)
-- Push Notifications (Expo Notifications)
+- ✅ Push Notifications (Completado v1.1.0+)
 - Recurring Events (RRULE)
 - Background Jobs (BullMQ)
-- Submit a App Stores (iOS + Android)
+- Submit a Google Play Store
 
 ### Mediano Plazo (Mes 2-3)
 - Monetización (Stripe Integration)
@@ -432,7 +442,7 @@ Documentation (100%):
 - Google Calendar Integration
 - Advanced Analytics
 
-**Ver roadmap completo:** Documentación en Obsidian Vault → `FASE 2/11. Roadmap de Priorización.md`
+**Ver roadmap completo:** Documentación en Obsidian Vault → `ROADMAP_POST_MVP.md`
 
 ---
 
@@ -503,15 +513,15 @@ curl https://kaia-production.up.railway.app/
 ## 📝 Notas Importantes
 
 ⚠️ **ANTES DE EMPEZAR:**
-1. Lee el archivo **`DOCUMENTACION.md`** en **Obsidian Vault** (`C:\Users\jorge\OneDrive\Desktop\OneDrive\Documentos\Obsidian Vault\Kaia\`)
-2. Revisa la documentación completa en Obsidian Vault (46 docs organizados)
+1. Lee el archivo **`00. README - INICIO AQUÍ.md`** en **Obsidian Vault**
+2. Revisa la documentación completa en Obsidian Vault (reorganizada 9 Nov 2025)
 3. Verifica que los servicios estén activos (Railway, UptimeRobot)
 
 📚 **DOCUMENTACIÓN:**
 - **TODA la documentación del proyecto está en Obsidian Vault**
-- Este repositorio contiene SOLO código y docs técnicas mínimas
-- **NO crear archivos .md extensos en este repositorio sin autorización**
-- Para nueva documentación: siempre en Obsidian (salvo que se indique explícitamente)
+- Este repositorio contiene código y documentación técnica en `docs/`
+- Ver `backend/docs/deployment/REDIS_DEPLOYMENT.md` para Redis
+- Ver `docs/mobile/` para guías de APK y EAS Build
 
 🔐 **SEGURIDAD:**
 - NUNCA commitear API keys a GitHub
@@ -553,14 +563,14 @@ Este proyecto es privado y pertenece a Jorge Adrián Pucheta.
 
 ---
 
-**¿Necesitas ayuda?** Lee `DOCUMENTACION.md` en Obsidian Vault primero.
+**¿Necesitas ayuda?** Lee `00. README - INICIO AQUÍ.md` en Obsidian Vault primero.
 
-**¿Quieres contribuir?** Revisa la documentación completa en Obsidian Vault (46 docs).
+**¿Quieres contribuir?** Revisa la documentación completa en Obsidian Vault.
 
 **¡Kaia está lista para cambiar cómo gestionas tu vida diaria! 🤖✨**
 
 ---
 
-**Última actualización:** 22 de Octubre, 2025
-**Versión:** 1.0.0
-**Estado:** ✅ MVP 100% COMPLETADO + PRODUCTION-READY
+**Última actualización:** 9 de Noviembre, 2025
+**Versión:** 1.1.2 (Stable)
+**Estado:** ✅ v1.1.2 EN PRODUCCIÓN + PRODUCTION-READY
