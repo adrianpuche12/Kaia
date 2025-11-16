@@ -2,7 +2,7 @@
   "expo": {
     "name": "Kaia",
     "slug": "mobile",
-    "version": "1.3.5",
+    "version": "1.4.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -20,7 +20,7 @@
     },
     "android": {
       "package": "com.adrianpuche.kaia",
-      "versionCode": 6,
+      "versionCode": 7,
       "minSdkVersion": 21,
       "targetSdkVersion": 34,
       "permissions": [
@@ -34,18 +34,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "useNextNotificationsApi": true,
-      "usesCleartextTraffic": true,
-      "networkSecurityConfig": {
-        "cleartextTraffic": true,
-        "domainConfig": [
-          {
-            "domain": "62.171.160.238",
-            "includeSubdomains": false,
-            "cleartextTrafficPermitted": true
-          }
-        ]
-      }
+      "useNextNotificationsApi": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -68,7 +57,7 @@
       "eas": {
         "projectId": "ca76b7eb-16ca-4c80-9e94-e4032ed4c3b4"
       },
-      "apiUrl": "http://62.171.160.238:3003/api"
+      "apiUrl": "https://spirited-spontaneity-production.up.railway.app/api"
     }
   }
 }
