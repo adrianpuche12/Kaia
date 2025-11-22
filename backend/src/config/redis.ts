@@ -58,6 +58,8 @@ class RedisClient {
         lazyConnect: false,
         enableReadyCheck: true,
         enableOfflineQueue: true,
+        // Upstash compatibility: disable CLIENT SETINFO command
+        enableAutoPipelining: false,
       });
 
       // Connection events
