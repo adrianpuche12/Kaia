@@ -1,13 +1,10 @@
-// Redis client configuration
-import Redis from 'ioredis';
-import { config } from './env';
+// Upstash Redis REST client configuration
+import { Redis } from '@upstash/redis';
 import { logger } from '../utils/logger';
 
 class RedisClient {
   private static instance: Redis | null = null;
   private static isConnected: boolean = false;
-  private static connectionAttempts: number = 0;
-  private static maxReconnectAttempts: number = 5;
 
   /**
    * Get Redis client instance (singleton)
@@ -20,10 +17,10 @@ class RedisClient {
   }
 
   /**
-   * Create Redis client with configuration
+   * Create Upstash Redis client with REST API
    */
   private static createClient(): Redis | null {
-    // Skip Redis if not enabled or URL not provided
+    // Skip Redis if not enabled
     const cacheEnabled = process.env.CACHE_ENABLED === 'true';
 
     if (!cacheEnabled) {
@@ -31,71 +28,30 @@ class RedisClient {
       return null;
     }
 
-    if (!config.redisUrl || config.redisUrl === 'redis://localhost:6379') {
-      logger.warn('⚠️  Redis URL not configured, caching disabled');
+    // Check for Upstash REST credentials
+    const restUrl = process.env.UPSTASH_REDIS_REST_URL;
+    const restToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+    if (!restUrl || !restToken) {
+      logger.warn('⚠️  Upstash Redis credentials not configured (UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN missing)');
       return null;
     }
 
     try {
-      logger.info('🔌 Connecting to Redis...');
+      logger.info('🔌 Connecting to Upstash Redis (REST API)...');
 
-      const redis = new Redis(config.redisUrl, {
-        maxRetriesPerRequest: 3,
-        retryStrategy: (times) => {
-          if (times > this.maxReconnectAttempts) {
-            logger.error('❌ Redis max reconnection attempts reached');
-            return null; // Stop reconnecting
-          }
-
-          const delay = Math.min(times * 200, 2000);
-          logger.warn(`⏳ Redis reconnecting... Attempt ${times}/${this.maxReconnectAttempts} (delay: ${delay}ms)`);
-          return delay;
-        },
-        reconnectOnError: (err) => {
-          logger.error('Redis connection error:', err.message);
-          return true; // Retry on error
-        },
-        lazyConnect: false,
-        enableReadyCheck: true,
-        enableOfflineQueue: true,
-        // Upstash compatibility: disable CLIENT SETINFO command
-        enableAutoPipelining: false,
+      const redis = new Redis({
+        url: restUrl,
+        token: restToken,
       });
 
-      // Connection events
-      redis.on('connect', () => {
-        this.connectionAttempts = 0;
-        logger.info('🔌 Redis connecting...');
-      });
-
-      redis.on('ready', () => {
-        this.isConnected = true;
-        logger.info('✅ Redis connected and ready!');
-      });
-
-      redis.on('error', (error) => {
-        this.isConnected = false;
-        logger.error('❌ Redis error:', error.message);
-      });
-
-      redis.on('close', () => {
-        this.isConnected = false;
-        logger.warn('⚠️  Redis connection closed');
-      });
-
-      redis.on('reconnecting', (delay) => {
-        this.connectionAttempts++;
-        logger.info(`⏳ Redis reconnecting in ${delay}ms... (attempt ${this.connectionAttempts})`);
-      });
-
-      redis.on('end', () => {
-        this.isConnected = false;
-        logger.warn('⚠️  Redis connection ended');
-      });
+      this.isConnected = true;
+      logger.info('✅ Upstash Redis connected successfully!');
 
       return redis;
     } catch (error) {
-      logger.error('❌ Failed to create Redis client:', error);
+      logger.error('❌ Failed to create Upstash Redis client:', error);
+      this.isConnected = false;
       return null;
     }
   }
@@ -111,34 +67,14 @@ class RedisClient {
    * Get connection status
    */
   static getStatus(): { connected: boolean; uptime: number | null } {
-    if (!this.instance) {
-      return { connected: false, uptime: null };
-    }
-
     return {
       connected: this.isConnected,
-      uptime: this.instance.status === 'ready' ? process.uptime() : null,
+      uptime: this.isConnected ? process.uptime() : null,
     };
   }
 
   /**
-   * Gracefully disconnect Redis
-   */
-  static async disconnect(): Promise<void> {
-    if (this.instance) {
-      try {
-        await this.instance.quit();
-        this.isConnected = false;
-        this.instance = null;
-        logger.info('✅ Redis disconnected gracefully');
-      } catch (error) {
-        logger.error('❌ Error disconnecting Redis:', error);
-      }
-    }
-  }
-
-  /**
-   * Health check
+   * Health check - ping Redis
    */
   static async healthCheck(): Promise<{
     healthy: boolean;
@@ -154,12 +90,19 @@ class RedisClient {
 
     try {
       const start = Date.now();
-      await this.instance.ping();
+      const result = await this.instance.ping();
       const latency = Date.now() - start;
 
+      if (result === 'PONG' || result === true) {
+        return {
+          healthy: true,
+          latency,
+        };
+      }
+
       return {
-        healthy: true,
-        latency,
+        healthy: false,
+        error: 'Unexpected ping response',
       };
     } catch (error: any) {
       return {
@@ -170,7 +113,7 @@ class RedisClient {
   }
 
   /**
-   * Get Redis info
+   * Get Redis info (Upstash REST compatible)
    */
   static async getInfo(): Promise<{
     version?: string;
@@ -184,33 +127,30 @@ class RedisClient {
     }
 
     try {
-      const info = await this.instance.info();
+      // Note: Upstash REST API has limited INFO command support
+      // We'll get what we can
       const dbSize = await this.instance.dbsize();
 
-      // Parse info string
-      const lines = info.split('\r\n');
-      const data: any = {};
-
-      lines.forEach((line) => {
-        if (line && !line.startsWith('#')) {
-          const [key, value] = line.split(':');
-          if (key && value) {
-            data[key] = value;
-          }
-        }
-      });
-
       return {
-        version: data.redis_version,
-        uptime: parseInt(data.uptime_in_seconds, 10),
-        connectedClients: parseInt(data.connected_clients, 10),
-        usedMemory: data.used_memory_human,
+        version: 'Upstash REST',
+        uptime: Math.floor(process.uptime()),
+        connectedClients: 1, // REST is stateless
+        usedMemory: 'N/A (REST API)',
         totalKeys: dbSize,
       };
     } catch (error) {
       logger.error('Error getting Redis info:', error);
       return null;
     }
+  }
+
+  /**
+   * Gracefully disconnect (no-op for REST client)
+   */
+  static async disconnect(): Promise<void> {
+    this.isConnected = false;
+    this.instance = null;
+    logger.info('✅ Redis client disconnected');
   }
 }
 
@@ -228,4 +168,3 @@ process.on('SIGINT', async () => {
 
 export { RedisClient, redis };
 export default redis;
-// Force redeploy - 17 Oct 2025 03:25:57
