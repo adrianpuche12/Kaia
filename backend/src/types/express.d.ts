@@ -1,16 +1,21 @@
-// Extensión de tipos de Express para TypeScript
+// Type declarations for Express 5.x compatibility
+declare module 'express' {
+  import * as express from 'express-serve-static-core';
 
-import { Request } from 'express';
+  export interface Request extends express.Request {}
+  export interface Response extends express.Response {}
+  export interface NextFunction extends express.NextFunction {}
+  export interface Router extends express.Router {}
+  export interface Application extends express.Application {}
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        id: string;
-        email: string;
-      };
-    }
+  function e(): express.Express;
+
+  namespace e {
+    export const json: typeof express.json;
+    export const urlencoded: typeof express.urlencoded;
+    export const Router: typeof express.Router;
+    export const static: typeof express.static;
   }
-}
 
-export {};
+  export = e;
+}

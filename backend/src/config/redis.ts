@@ -93,7 +93,7 @@ class RedisClient {
       const result = await this.instance.ping();
       const latency = Date.now() - start;
 
-      if (result === 'PONG' || result === true) {
+      if (result === 'PONG' || result === 'pong' || result === true) {
         return {
           healthy: true,
           latency,
