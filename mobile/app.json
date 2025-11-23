@@ -2,7 +2,7 @@
   "expo": {
     "name": "Kaia",
     "slug": "mobile",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -20,7 +20,7 @@
     },
     "android": {
       "package": "com.adrianpuche.kaia",
-      "versionCode": 7,
+      "versionCode": 8,
       "minSdkVersion": 21,
       "targetSdkVersion": 34,
       "permissions": [
@@ -57,7 +57,7 @@
       "eas": {
         "projectId": "ca76b7eb-16ca-4c80-9e94-e4032ed4c3b4"
       },
-      "apiUrl": "https://spirited-spontaneity-production.up.railway.app/api"
+      "apiUrl": "https://kaia-backend-3fxx.onrender.com/api"
     }
   }
 }
