@@ -93,7 +93,9 @@ class RedisClient {
       const result = await this.instance.ping();
       const latency = Date.now() - start;
 
-      if (result === 'PONG' || result === 'pong' || result === true) {
+      // Upstash ping can return 'PONG', 'pong', 1, or true
+      const resultStr = String(result).toLowerCase();
+      if (resultStr === 'pong' || resultStr === 'true' || resultStr === '1') {
         return {
           healthy: true,
           latency,

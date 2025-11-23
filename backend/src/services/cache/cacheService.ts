@@ -39,7 +39,7 @@ class CacheService {
       if (cached) {
         this.metrics.hits++;
         this.updateHitRate();
-        return JSON.parse(cached) as T;
+        return JSON.parse(String(cached)) as T;
       }
 
       this.metrics.misses++;

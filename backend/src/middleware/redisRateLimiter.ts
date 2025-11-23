@@ -52,9 +52,9 @@ export function redisRateLimiter(options: RateLimitOptions) {
       // Check limit
       if (count >= maxRequests) {
         // Get window reset time
-        const oldestEntry = await redis.zrange(key, 0, 0, 'WITHSCORES');
+        const oldestEntry = await redis.zrange(key, 0, 0);
         const resetAt = oldestEntry.length > 1
-          ? parseInt(oldestEntry[1], 10) + windowMs
+          ? parseInt(String(oldestEntry[1]), 10) + windowMs
           : now + windowMs;
 
         const retryAfter = Math.ceil((resetAt - now) / 1000);
@@ -73,7 +73,7 @@ export function redisRateLimiter(options: RateLimitOptions) {
       }
 
       // Add current request
-      await redis.zadd(key, now, `${now}-${Math.random()}`);
+      await redis.zadd(key, { score: now, member: `${now}-${Math.random()}` });
 
       // Set expiry
       await redis.expire(key, windowSeconds);
@@ -106,7 +106,7 @@ export const generalRedisRateLimiter = redisRateLimiter({
 export const authRedisRateLimiter = redisRateLimiter({
   maxRequests: RATE_LIMITS.AUTH,
   windowMs: 15 * 60 * 1000,
-  keyGenerator: (req) => `ratelimit:auth:${req.ip || 'unknown'}`,
+  keyGenerator: (req) => `ratelimit:auth:${(req as any).ip || 'unknown'}`,
 });
 
 /**
