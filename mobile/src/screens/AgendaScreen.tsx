@@ -19,6 +19,7 @@ import { brandStyles } from '../theme/brandStyles';
 import { eventAPI } from '../services/api';
 import { Event } from '../types';
 import { notificationService } from '../services/notificationService';
+import EventDetailModal from '../components/EventDetailModal';
 
 export default function AgendaScreen() {
   const [fontsLoaded] = useFonts({
@@ -36,9 +37,30 @@ export default function AgendaScreen() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState('');
 
+  // Modal states
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+
   useEffect(() => {
     loadEvents();
   }, [selectedView]);
+
+  // Búsqueda automática con debouncing
+  useEffect(() => {
+    // Si no hay query, cargar eventos normales
+    if (!searchQuery.trim()) {
+      loadEvents();
+      return;
+    }
+
+    // Esperar 500ms antes de buscar (debouncing)
+    const timeoutId = setTimeout(() => {
+      handleSearch();
+    }, 500);
+
+    // Limpiar timeout si el usuario sigue escribiendo
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
 
   const loadEvents = async () => {
     try {
@@ -258,12 +280,30 @@ export default function AgendaScreen() {
     }
   };
 
+  const handleEventPress = (event: Event) => {
+    setSelectedEvent(event);
+    setModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setSelectedEvent(null);
+  };
+
+  const handleEventUpdated = () => {
+    loadEvents(); // Reload events after any update
+  };
+
   if (!fontsLoaded) {
     return null;
   }
 
   const EventCard = ({ event }: { event: Event }) => (
-    <View style={styles.eventCard}>
+    <TouchableOpacity
+      style={styles.eventCard}
+      onPress={() => handleEventPress(event)}
+      activeOpacity={0.7}
+    >
       <View style={styles.eventInfo}>
         <View style={styles.eventTime}>
           <Text style={styles.timeText}>{formatEventTime(event.startTime.toString())}</Text>
@@ -283,11 +323,14 @@ export default function AgendaScreen() {
       </View>
       <TouchableOpacity
         style={styles.notificationButton}
-        onPress={() => handleScheduleEventNotifications(event)}
+        onPress={(e) => {
+          e.stopPropagation(); // Prevent opening modal
+          handleScheduleEventNotifications(event);
+        }}
       >
         <Text style={styles.notificationButtonText}>🔔</Text>
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -364,14 +407,25 @@ export default function AgendaScreen() {
 
           {/* Barra de búsqueda */}
           <View style={styles.searchContainer}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Buscar eventos..."
-              placeholderTextColor="rgba(255, 255, 255, 0.6)"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              onSubmitEditing={handleSearch}
-            />
+            <View style={styles.searchInputContainer}>
+              <Text style={styles.searchIcon}>🔍</Text>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Buscar eventos..."
+                placeholderTextColor="rgba(255, 255, 255, 0.6)"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onSubmitEditing={handleSearch}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity
+                  style={styles.clearButton}
+                  onPress={() => setSearchQuery('')}
+                >
+                  <Text style={styles.clearButtonText}>✕</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
           {/* Filtros de vista */}
@@ -428,6 +482,14 @@ export default function AgendaScreen() {
           </View>
         </ScrollView>
       </SafeAreaView>
+
+      {/* Event Detail Modal */}
+      <EventDetailModal
+        visible={modalVisible}
+        event={selectedEvent}
+        onClose={handleCloseModal}
+        onEventUpdated={handleEventUpdated}
+      />
     </LinearGradient>
   );
 }
@@ -540,13 +602,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.xl,
     marginBottom: theme.spacing.md,
   },
-  searchInput: {
+  searchInputContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: theme.borderRadius.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: theme.spacing.lg,
+  },
+  searchIcon: {
+    fontSize: 18,
+    marginRight: theme.spacing.sm,
+    opacity: 0.7,
+  },
+  searchInput: {
+    flex: 1,
     paddingVertical: theme.spacing.md,
     fontSize: theme.typography.fontSize.base,
     color: '#FFFFFF',
+  },
+  clearButton: {
+    padding: theme.spacing.xs,
+    marginLeft: theme.spacing.sm,
+  },
+  clearButtonText: {
+    fontSize: 20,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: theme.typography.fontWeight.bold,
   },
   filtersContainer: {
     flexDirection: 'row',

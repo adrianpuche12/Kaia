@@ -291,6 +291,14 @@ export const schemas = {
   rateMCP: z.object({
     rating: z.number().min(1, 'Rating mínimo: 1').max(5, 'Rating máximo: 5'),
   }),
+
+  // TTS
+  speak: z.object({
+    text: z.string().min(1, 'Texto requerido').max(5000, 'Máximo 5000 caracteres'),
+    voice_id: z.string().optional(),
+    stability: z.number().min(0).max(1).optional(),
+    similarity_boost: z.number().min(0).max(1).optional(),
+  }),
 };
 
 /**

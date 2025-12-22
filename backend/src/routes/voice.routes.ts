@@ -19,5 +19,6 @@ router.get('/intents', VoiceController.getCommonIntents);
 
 // POST routes (con rate limiting para procesamiento de voz)
 router.post('/process', voiceRateLimiter, validateBody(schemas.processVoice), VoiceController.processCommand);
+router.post('/query', voiceRateLimiter, validateBody(schemas.processVoice), VoiceController.processQuery);
 
 export default router;

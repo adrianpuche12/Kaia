@@ -352,6 +352,97 @@ export class EventService {
   }
 
   /**
+   * Agregar participante a un evento
+   */
+  static async addParticipant(userId: string, eventId: string, participant: string): Promise<EventDTO> {
+    const event = await prisma.event.findFirst({
+      where: { id: eventId, userId },
+    });
+
+    if (!event) {
+      throw {
+        statusCode: 404,
+        code: 'NOT_FOUND',
+        message: 'Evento no encontrado',
+      };
+    }
+
+    // Parsear participantes actuales
+    const participants = event.participants ? JSON.parse(event.participants) : [];
+
+    // Verificar si ya existe
+    if (participants.includes(participant)) {
+      throw {
+        statusCode: 400,
+        code: 'ALREADY_EXISTS',
+        message: 'El participante ya está en el evento',
+      };
+    }
+
+    // Agregar nuevo participante
+    participants.push(participant);
+
+    const updatedEvent = await prisma.event.update({
+      where: { id: eventId },
+      data: {
+        participants: JSON.stringify(participants),
+      },
+      include: {
+        reminders: true,
+      },
+    });
+
+    logger.info('Participant added to event', { eventId, userId, participant });
+
+    return this.toDTO(updatedEvent);
+  }
+
+  /**
+   * Remover participante de un evento
+   */
+  static async removeParticipant(userId: string, eventId: string, participantName: string): Promise<EventDTO> {
+    const event = await prisma.event.findFirst({
+      where: { id: eventId, userId },
+    });
+
+    if (!event) {
+      throw {
+        statusCode: 404,
+        code: 'NOT_FOUND',
+        message: 'Evento no encontrado',
+      };
+    }
+
+    // Parsear participantes actuales
+    const participants = event.participants ? JSON.parse(event.participants) : [];
+
+    // Filtrar para remover el participante
+    const updatedParticipants = participants.filter((p: string) => p !== participantName);
+
+    if (updatedParticipants.length === participants.length) {
+      throw {
+        statusCode: 404,
+        code: 'NOT_FOUND',
+        message: 'Participante no encontrado en el evento',
+      };
+    }
+
+    const updatedEvent = await prisma.event.update({
+      where: { id: eventId },
+      data: {
+        participants: JSON.stringify(updatedParticipants),
+      },
+      include: {
+        reminders: true,
+      },
+    });
+
+    logger.info('Participant removed from event', { eventId, userId, participant: participantName });
+
+    return this.toDTO(updatedEvent);
+  }
+
+  /**
    * Verifica conflictos de horario
    */
   private static async checkConflicts(

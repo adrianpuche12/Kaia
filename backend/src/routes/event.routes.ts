@@ -71,6 +71,18 @@ router.post('/:id/complete',
   EventController.completeEvent
 );
 
+router.post('/:id/participants',
+  validateId(),
+  invalidateCache(['events:user:{userId}:*', 'events:{id}']),
+  EventController.addParticipant
+);
+
+router.delete('/:id/participants/:participantName',
+  validateId(),
+  invalidateCache(['events:user:{userId}:*', 'events:{id}']),
+  EventController.removeParticipant
+);
+
 router.delete('/:id',
   validateId(),
   invalidateCache(['events:user:{userId}:*', 'events:{id}']),

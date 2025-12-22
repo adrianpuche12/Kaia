@@ -36,6 +36,37 @@ class VoiceAPI {
     const response = await apiClient.get<{ intents: Array<{ intent: string; count: number }> }>('/voice/intents', { limit });
     return response.data!.intents;
   }
+
+  /**
+   * Procesar consulta de voz (query, no comando)
+   * Ejemplos: "¿Qué tengo hoy?", "¿Cuáles son mis citas de mañana?"
+   */
+  async processQuery(transcript: string): Promise<{
+    answer: string;
+    queryType: string;
+    events: any[];
+    eventCount: number;
+    filters?: any;
+    aiMetrics: {
+      intent: string;
+      tokensUsed?: number;
+      processingTime?: number;
+    };
+  }> {
+    const response = await apiClient.post<{
+      answer: string;
+      queryType: string;
+      events: any[];
+      eventCount: number;
+      filters?: any;
+      aiMetrics: {
+        intent: string;
+        tokensUsed?: number;
+        processingTime?: number;
+      };
+    }>('/voice/query', { transcript });
+    return response.data!;
+  }
 }
 
 export const voiceAPI = new VoiceAPI();

@@ -1,0 +1,14 @@
+# Exclude old APK files
+*.apk
+
+# Exclude test files
+*.md
+TESTING.md
+
+# Exclude development files
+.expo/
+android/.gradle/
+android/app/build/
+
+# Exclude unnecessary files
+nul

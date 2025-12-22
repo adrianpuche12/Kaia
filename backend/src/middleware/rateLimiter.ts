@@ -141,6 +141,16 @@ export const locationRateLimiter = rateLimiter({
   keyGenerator: (req) => `location:${(req as any).user?.id || 'anonymous'}`,
 });
 
+/**
+ * Rate limiter para TTS (50 requests/hora por usuario)
+ * Límite conservador para proteger la API key de ElevenLabs
+ */
+export const ttsRateLimiter = rateLimiter({
+  maxRequests: 50,
+  windowMs: 60 * 60 * 1000, // 1 hora
+  keyGenerator: (req) => `tts:${(req as any).user?.id || 'anonymous'}`,
+});
+
 export default {
   rateLimiter,
   generalRateLimiter,
@@ -149,4 +159,5 @@ export default {
   messageRateLimiter,
   voiceRateLimiter,
   locationRateLimiter,
+  ttsRateLimiter,
 };

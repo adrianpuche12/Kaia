@@ -34,6 +34,30 @@ export interface ProcessedCommand {
   processingTime?: number;
 }
 
+export interface VoiceQueryInput {
+  transcript: string;
+  userId: string;
+  currentDate?: Date;
+}
+
+export interface ProcessedQuery {
+  success: boolean;
+  queryType: 'EVENT_LIST' | 'EVENT_DETAIL' | 'GENERAL' | 'UNKNOWN';
+  intent: string;
+  filters?: {
+    timeframe?: 'today' | 'tomorrow' | 'week' | 'month' | 'custom';
+    startDate?: Date;
+    endDate?: Date;
+    type?: string;
+    searchQuery?: string;
+  };
+  answer: string;
+  needsData: boolean;
+  tokensUsed?: number;
+  processingTime?: number;
+  error?: string;
+}
+
 export class AIService {
   private aiFactory;
 
@@ -216,5 +240,219 @@ RESPONDE SOLO CON EL JSON, SIN TEXTO ADICIONAL.`;
     }
 
     return confirmation;
+  }
+
+  /**
+   * Procesar consulta de voz (query, no comando)
+   * Ejemplos: "¿Qué tengo hoy?", "¿Cuáles son mis citas de mañana?"
+   */
+  async processVoiceQuery(input: VoiceQueryInput): Promise<ProcessedQuery> {
+    const startTime = Date.now();
+
+    try {
+      // 1. Construir prompt para análisis de consulta
+      const prompt = this.buildQueryPrompt(input.transcript, input.currentDate);
+
+      // 2. Enviar a IA para análisis
+      const aiResult = await this.aiFactory.generateAnswer({
+        prompt,
+        mode: 'expert',
+        temperature: 0.2,
+        maxTokens: 300,
+      });
+
+      // 3. Parsear respuesta
+      const queryInfo = this.parseQueryResponse(aiResult.answer);
+
+      // 4. Parsear fechas si existen
+      if (queryInfo.filters?.timeframe === 'custom' && queryInfo.filters.dateText) {
+        const parsedDate = parseNaturalDate(queryInfo.filters.dateText, input.currentDate);
+        if (parsedDate) {
+          queryInfo.filters.startDate = parsedDate;
+        }
+      }
+
+      return {
+        success: true,
+        queryType: queryInfo.queryType,
+        intent: queryInfo.intent,
+        filters: queryInfo.filters,
+        answer: queryInfo.preliminaryAnswer || 'Déjame buscar esa información para ti.',
+        needsData: true,
+        tokensUsed: aiResult.tokensUsed.total,
+        processingTime: Date.now() - startTime,
+      };
+    } catch (error: any) {
+      console.error('[AIService] Error processing voice query:', error);
+      return {
+        success: false,
+        queryType: 'UNKNOWN',
+        intent: 'unknown',
+        answer: 'Lo siento, no pude entender tu pregunta.',
+        needsData: false,
+        error: error.message,
+        processingTime: Date.now() - startTime,
+      };
+    }
+  }
+
+  /**
+   * Construir prompt para análisis de consultas
+   */
+  private buildQueryPrompt(transcript: string, currentDate?: Date): string {
+    const refDate = currentDate || new Date();
+    const dateStr = refDate.toLocaleDateString('es-ES', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+
+    return `Eres Kaia, un asistente que analiza consultas del usuario sobre su agenda.
+
+FECHA DE REFERENCIA: ${dateStr}
+
+CONSULTA: "${transcript}"
+
+INSTRUCCIONES:
+1. Determina el tipo de consulta:
+   - EVENT_LIST: Pregunta por múltiples eventos ("¿qué tengo hoy?", "¿cuáles son mis citas?")
+   - EVENT_DETAIL: Pregunta por un evento específico ("¿a qué hora es mi reunión?")
+   - GENERAL: Pregunta general ("¿estoy libre mañana?")
+   - UNKNOWN: No está clara la intención
+
+2. Extrae filtros de búsqueda:
+   - timeframe: "today" | "tomorrow" | "week" | "month" | "custom"
+   - dateText: Expresión de fecha si es custom ("el martes", "15 de enero")
+   - type: Tipo de evento si se especifica (MEDICAL, MEETING, etc.)
+   - searchQuery: Términos de búsqueda ("dentista", "reunión con Juan")
+
+3. FORMATO DE RESPUESTA (JSON estricto):
+{
+  "queryType": "EVENT_LIST|EVENT_DETAIL|GENERAL|UNKNOWN",
+  "intent": "descripción breve del intent",
+  "filters": {
+    "timeframe": "today|tomorrow|week|month|custom",
+    "dateText": "string o null",
+    "type": "string o null",
+    "searchQuery": "string o null"
+  },
+  "preliminaryAnswer": "respuesta preliminar antes de obtener datos"
+}
+
+EJEMPLOS:
+"¿qué tengo hoy?" → {"queryType": "EVENT_LIST", "filters": {"timeframe": "today"}}
+"¿cuáles son mis citas de mañana?" → {"queryType": "EVENT_LIST", "filters": {"timeframe": "tomorrow"}}
+"¿tengo algo el viernes?" → {"queryType": "GENERAL", "filters": {"timeframe": "custom", "dateText": "el viernes"}}
+
+RESPONDE SOLO CON EL JSON, SIN TEXTO ADICIONAL.`;
+  }
+
+  /**
+   * Parsear respuesta de consulta
+   */
+  private parseQueryResponse(response: string): any {
+    try {
+      // Limpiar respuesta
+      let cleanResponse = response.trim();
+      if (cleanResponse.startsWith('```json')) {
+        cleanResponse = cleanResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      } else if (cleanResponse.startsWith('```')) {
+        cleanResponse = cleanResponse.replace(/```\n?/g, '');
+      }
+
+      const parsed = JSON.parse(cleanResponse);
+
+      return {
+        queryType: parsed.queryType || 'UNKNOWN',
+        intent: parsed.intent || 'unknown',
+        filters: parsed.filters || {},
+        preliminaryAnswer: parsed.preliminaryAnswer || null,
+      };
+    } catch (error) {
+      console.error('[AIService] Error parsing query response:', error);
+      console.error('[AIService] Response was:', response);
+
+      return {
+        queryType: 'UNKNOWN',
+        intent: 'parse_error',
+        filters: {},
+      };
+    }
+  }
+
+  /**
+   * Generar respuesta natural con datos de eventos
+   */
+  async generateQueryResponse(query: ProcessedQuery, events: any[]): Promise<string> {
+    const refDate = new Date();
+
+    if (!events || events.length === 0) {
+      // Sin eventos
+      switch (query.filters?.timeframe) {
+        case 'today':
+          return 'No tienes eventos programados para hoy. Tu agenda está libre.';
+        case 'tomorrow':
+          return 'No tienes eventos programados para mañana. Tu agenda está libre.';
+        case 'week':
+          return 'No tienes eventos programados para esta semana. Tu agenda está libre.';
+        default:
+          return 'No encontré eventos para ese período. Tu agenda está libre.';
+      }
+    }
+
+    // Con eventos - construir respuesta
+    const eventCount = events.length;
+    const timeframe = query.filters?.timeframe || 'ese período';
+
+    let response = '';
+
+    switch (timeframe) {
+      case 'today':
+        response = `Tienes ${eventCount} ${eventCount === 1 ? 'evento' : 'eventos'} programado${eventCount === 1 ? '' : 's'} para hoy:\n\n`;
+        break;
+      case 'tomorrow':
+        response = `Tienes ${eventCount} ${eventCount === 1 ? 'evento' : 'eventos'} programado${eventCount === 1 ? '' : 's'} para mañana:\n\n`;
+        break;
+      case 'week':
+        response = `Tienes ${eventCount} ${eventCount === 1 ? 'evento' : 'eventos'} programado${eventCount === 1 ? '' : 's'} para esta semana:\n\n`;
+        break;
+      default:
+        response = `Tienes ${eventCount} ${eventCount === 1 ? 'evento' : 'eventos'}:\n\n`;
+    }
+
+    // Listar eventos
+    events.slice(0, 5).forEach((event, index) => {
+      const startTime = new Date(event.startTime);
+      const timeStr = startTime.toLocaleTimeString('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      const dateStr = startTime.toLocaleDateString('es-ES', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short'
+      });
+
+      response += `${index + 1}. ${event.title}`;
+      if (event.allDay) {
+        response += ` (todo el día)`;
+      } else {
+        response += ` a las ${timeStr}`;
+      }
+      if (timeframe !== 'today' && timeframe !== 'tomorrow') {
+        response += ` el ${dateStr}`;
+      }
+      if (event.location) {
+        response += ` en ${event.location}`;
+      }
+      response += '\n';
+    });
+
+    if (events.length > 5) {
+      response += `\n... y ${events.length - 5} más.`;
+    }
+
+    return response;
   }
 }

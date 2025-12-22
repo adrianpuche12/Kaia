@@ -75,11 +75,12 @@ class EventAPI {
   }
 
   async searchEvents(query: string, filters?: EventFilters): Promise<Event[]> {
-    const response = await apiClient.get<{ events: Event[] }>('/events/search', {
+    // La búsqueda usa el endpoint principal /events con parámetro q
+    const response = await apiClient.get<PaginatedResponse<Event>>('/events', {
       q: query,
       ...filters
     });
-    return response.data!.events;
+    return response.data!.items;
   }
 
   async bulkCreateEvents(events: CreateEventRequest[]): Promise<Event[]> {

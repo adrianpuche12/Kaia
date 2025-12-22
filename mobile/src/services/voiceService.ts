@@ -4,6 +4,12 @@ import {
   addSpeechRecognitionListener,
 } from '@jamsch/expo-speech-recognition';
 import * as Speech from 'expo-speech';
+import { Audio } from 'expo-av';
+import { apiClient } from './api/apiClient';
+import { secureStorage } from './storage/secureStorage';
+import Constants from 'expo-constants';
+
+const API_URL = Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL || 'http://62.171.160.238:3003/api';
 
 export class VoiceService {
   private isListening = false;
@@ -106,8 +112,34 @@ export class VoiceService {
     }
   }
 
-  // Síntesis de voz (respuesta de Kaia)
+  // Síntesis de voz (respuesta de Kaia) con ElevenLabs
   async speak(text: string, options?: Speech.SpeechOptions): Promise<void> {
+    try {
+      // Intentar usar TTS del backend (ElevenLabs)
+      const audioUri = await this.speakWithBackend(text);
+
+      if (audioUri) {
+        // Reproducir audio usando expo-av
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: audioUri },
+          { shouldPlay: true }
+        );
+
+        // Liberar el recurso cuando termine
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded && status.didJustFinish) {
+            sound.unloadAsync();
+          }
+        });
+
+        console.log('🔊 Speaking with ElevenLabs:', text.substring(0, 50));
+        return;
+      }
+    } catch (error) {
+      console.warn('⚠️ Backend TTS failed, falling back to expo-speech:', error);
+    }
+
+    // Fallback a expo-speech si el backend falla
     const defaultOptions: Speech.SpeechOptions = {
       language: 'es-ES',
       pitch: 1.0,
@@ -117,9 +149,60 @@ export class VoiceService {
 
     try {
       await Speech.speak(text, defaultOptions);
-      console.log('🔊 Speaking:', text);
+      console.log('🔊 Speaking with expo-speech:', text);
     } catch (error) {
       console.error('❌ Error in text-to-speech:', error);
+    }
+  }
+
+  // Llamada al backend TTS (ElevenLabs)
+  private async speakWithBackend(text: string): Promise<string | null> {
+    try {
+      const token = await secureStorage.getAccessToken();
+      if (!token) {
+        console.log('⚠️ No auth token, skipping backend TTS');
+        return null;
+      }
+
+      const url = `${API_URL}/tts/speak`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ text }),
+      });
+
+      // Si el backend dice que use client-side, retornar null
+      if (response.headers.get('Content-Type')?.includes('application/json')) {
+        const data = await response.json();
+        if (data.data?.provider === 'client-fallback') {
+          console.log('🔄 Backend requested client-side TTS');
+          return null;
+        }
+      }
+
+      if (!response.ok) {
+        console.warn('⚠️ Backend TTS error:', response.status);
+        return null;
+      }
+
+      // Guardar el audio en un archivo temporal
+      const blob = await response.blob();
+      const reader = new FileReader();
+
+      return new Promise((resolve, reject) => {
+        reader.onloadend = () => {
+          const base64data = reader.result as string;
+          resolve(base64data);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('❌ Error calling backend TTS:', error);
+      return null;
     }
   }
 

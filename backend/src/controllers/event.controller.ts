@@ -147,6 +147,45 @@ export class EventController {
   });
 
   /**
+   * POST /api/events/:id/participants
+   * Agregar participante a un evento
+   */
+  static addParticipant = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user!.id;
+    const { id } = req.params;
+    const { participant } = req.body;
+
+    if (!participant || typeof participant !== 'string') {
+      res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        message: 'El campo participant es requerido'
+      });
+      return;
+    }
+
+    const event = await EventService.addParticipant(userId, id, participant);
+
+    res.status(HTTP_STATUS.OK).json(
+      successResponse({ event }, 'Participante agregado')
+    );
+  });
+
+  /**
+   * DELETE /api/events/:id/participants/:participantName
+   * Remover participante de un evento
+   */
+  static removeParticipant = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user!.id;
+    const { id, participantName } = req.params;
+
+    const event = await EventService.removeParticipant(userId, id, participantName);
+
+    res.status(HTTP_STATUS.OK).json(
+      successResponse({ event }, 'Participante removido')
+    );
+  });
+
+  /**
    * POST /api/events/voice-command
    * Procesa comando de voz y crea evento
    */

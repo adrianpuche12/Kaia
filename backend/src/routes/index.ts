@@ -9,6 +9,7 @@ import voiceRoutes from './voice.routes';
 import locationRoutes from './location.routes';
 import mcpRoutes from './mcp.routes';
 import notificationRoutes from './notification.routes';
+import ttsRoutes from './tts.routes';
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use('/voice', voiceRoutes);
 router.use('/location', locationRoutes);
 router.use('/mcps', mcpRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/tts', ttsRoutes);
 
 export default router;

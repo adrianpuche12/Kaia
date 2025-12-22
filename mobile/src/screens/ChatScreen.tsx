@@ -13,16 +13,17 @@ import { useFonts, Caveat_400Regular, Caveat_700Bold } from '@expo-google-fonts/
 import VoiceButton from '../components/VoiceButton';
 import { unifiedVoiceService } from '../services/unifiedVoiceService';
 import { nlpService } from '../services/nlpService';
-import { messageAPI } from '../services/api';
+import { messageAPI, voiceAPI, eventAPI } from '../services/api';
 import { theme } from '../theme';
 import { brandStyles } from '../theme/brandStyles';
-import { Message } from '../types';
+import { Message, Event } from '../types';
 
 interface LocalMessage {
   id: string;
   text: string;
   isUser: boolean;
   timestamp: Date;
+  events?: Event[]; // eventos asociados a la respuesta (para consultas)
 }
 
 export default function ChatScreen() {
@@ -143,48 +144,127 @@ export default function ChatScreen() {
   };
 
   const processUserInput = async (text: string) => {
-    // Usar el nuevo servicio de NLP
     console.log('🧠 Processing:', text);
 
+    // Detectar la intención usando el NLP local
     const parsed = nlpService.parseInput(text);
     console.log('🧠 Parsed result:', parsed);
 
-    // Generar respuesta inteligente
-    const response = nlpService.generateResponse(parsed);
+    try {
+      let response = '';
+      let eventsToShow: Event[] | undefined = undefined;
 
-    // Si se detectó una intención de crear evento con suficientes datos, simular guardado
-    if (parsed.intent === 'create_event' && parsed.confidence > 0.7) {
-      console.log('📅 Event detected:', parsed.entities);
+      // Caso 1: CONSULTA - "¿Qué tengo hoy?"
+      if (parsed.intent === 'query_agenda') {
+        console.log('🔍 Processing query with backend...');
 
-      // Aquí más adelante conectaremos con el backend para guardar el evento
-      if (parsed.entities.title && parsed.entities.date && parsed.entities.time) {
-        // Evento completo, simular guardado exitoso
-        const eventSummary = `✅ Evento guardado: "${parsed.entities.title}" para ${parsed.entities.date} a las ${parsed.entities.time}`;
-        console.log(eventSummary);
+        const result = await voiceAPI.processQuery(text);
+        response = result.answer;
+        eventsToShow = result.events;
+
+        console.log('✅ Query result:', { answer: result.answer, eventCount: result.eventCount });
       }
-    }
+      // Caso 2: CREAR EVENTO - "Cita con el dentista mañana a las 3"
+      else if (parsed.intent === 'create_event' && parsed.confidence > 0.6) {
+        console.log('📅 Creating event with backend...');
 
-    // Agregar respuesta de Kaia
-    setTimeout(async () => {
-      addMessage(response, false);
-
-      // Hablar la respuesta si está habilitado
-      if (voiceEnabled) {
-        setIsSpeaking(true);
         try {
-          await unifiedVoiceService.speak(response);
-        } catch (error) {
-          console.error('Error speaking:', error);
-        } finally {
-          setIsSpeaking(false);
+          const result = await eventAPI.processVoiceCommand(text);
+          response = result.confirmation;
+
+          console.log('✅ Event created:', result.event);
+        } catch (error: any) {
+          console.error('❌ Error creating event:', error);
+          // Si falla, usar respuesta del NLP local
+          response = nlpService.generateResponse(parsed);
         }
       }
-    }, 1000);
+      // Caso 3: Otros (saludos, modificaciones, etc.)
+      else {
+        // Usar respuesta local del NLP
+        response = nlpService.generateResponse(parsed);
+      }
+
+      // Agregar respuesta de Kaia con eventos si los hay
+      setTimeout(async () => {
+        const newMessage: LocalMessage = {
+          id: Date.now().toString(),
+          text: response,
+          isUser: false,
+          timestamp: new Date(),
+          events: eventsToShow,
+        };
+        setMessages(prev => [...prev, newMessage]);
+
+        // Hablar la respuesta si está habilitado
+        if (voiceEnabled) {
+          setIsSpeaking(true);
+          try {
+            await unifiedVoiceService.speak(response);
+          } catch (error) {
+            console.error('Error speaking:', error);
+          } finally {
+            setIsSpeaking(false);
+          }
+        }
+      }, 1000);
+
+    } catch (error) {
+      console.error('❌ Error processing input:', error);
+
+      // Fallback a respuesta local
+      const fallbackResponse = nlpService.generateResponse(parsed);
+      setTimeout(async () => {
+        addMessage(fallbackResponse, false);
+
+        if (voiceEnabled) {
+          setIsSpeaking(true);
+          try {
+            await unifiedVoiceService.speak(fallbackResponse);
+          } catch (error) {
+            console.error('Error speaking:', error);
+          } finally {
+            setIsSpeaking(false);
+          }
+        }
+      }, 1000);
+    }
   };
 
   if (!fontsLoaded) {
     return null;
   }
+
+  const EventCard = ({ event }: { event: Event }) => (
+    <View style={styles.eventCard}>
+      <View style={styles.eventCardHeader}>
+        <Text style={styles.eventCardTitle}>{event.title}</Text>
+        {event.allDay ? (
+          <Text style={styles.eventCardTime}>Todo el día</Text>
+        ) : (
+          <Text style={styles.eventCardTime}>
+            {new Date(event.startTime).toLocaleTimeString('es-ES', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </Text>
+        )}
+      </View>
+      {event.description && (
+        <Text style={styles.eventCardDescription}>{event.description}</Text>
+      )}
+      {event.location && (
+        <Text style={styles.eventCardLocation}>📍 {event.location}</Text>
+      )}
+      <Text style={styles.eventCardDate}>
+        {new Date(event.startTime).toLocaleDateString('es-ES', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+        })}
+      </Text>
+    </View>
+  );
 
   const MessageBubble = ({ message }: { message: LocalMessage }) => (
     <View
@@ -201,6 +281,16 @@ export default function ChatScreen() {
       >
         {message.text}
       </Text>
+
+      {/* Mostrar eventos si los hay */}
+      {message.events && message.events.length > 0 && (
+        <View style={styles.eventsContainer}>
+          {message.events.map((event) => (
+            <EventCard key={event.id} event={event} />
+          ))}
+        </View>
+      )}
+
       <Text style={styles.timestamp}>
         {message.timestamp.toLocaleTimeString('es-ES', {
           hour: '2-digit',
@@ -500,5 +590,55 @@ const styles = StyleSheet.create({
   },
   statError: {
     color: theme.colors.tertiary.main,
+  },
+  eventsContainer: {
+    marginTop: theme.spacing.md,
+    gap: theme.spacing.sm,
+  },
+  eventCard: {
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+    borderLeftWidth: 3,
+    borderLeftColor: theme.colors.primary.main,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    marginVertical: theme.spacing.xs,
+  },
+  eventCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing.xs,
+  },
+  eventCardTitle: {
+    fontSize: theme.typography.fontSize.base,
+    fontWeight: theme.typography.fontWeight.semibold,
+    color: theme.colors.text.primary,
+    flex: 1,
+    marginRight: theme.spacing.sm,
+  },
+  eventCardTime: {
+    fontSize: theme.typography.fontSize.sm,
+    fontWeight: theme.typography.fontWeight.medium,
+    color: theme.colors.primary.main,
+    backgroundColor: 'rgba(139, 92, 246, 0.2)',
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
+  },
+  eventCardDescription: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.xs,
+  },
+  eventCardLocation: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.xs,
+  },
+  eventCardDate: {
+    fontSize: theme.typography.fontSize.xs,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.xs,
+    fontStyle: 'italic',
   },
 });

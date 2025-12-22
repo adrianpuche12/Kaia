@@ -96,6 +96,7 @@ app.get('/', (req, res) => {
       location: '/api/location',
       users: '/api/users',
       notifications: '/api/notifications',
+      tts: '/api/tts',
     },
   });
 });
