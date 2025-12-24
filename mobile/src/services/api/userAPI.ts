@@ -48,6 +48,12 @@ const userAPI = {
     return response.data;
   },
 
+  // Obtener preferencias
+  getPreferences: async () => {
+    const response = await apiClient.get('/users/preferences');
+    return response.data;
+  },
+
   // Actualizar preferencias
   updatePreferences: async (preferences: any) => {
     const response = await apiClient.put('/users/preferences', preferences);

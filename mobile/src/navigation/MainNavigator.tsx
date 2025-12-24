@@ -10,6 +10,9 @@ import AlarmsScreen from '../screens/AlarmsScreen';
 import ContactsScreen from '../screens/ContactsScreen';
 import ContactDetailScreen from '../screens/ContactDetailScreen';
 import LocationHistoryScreen from '../screens/LocationHistoryScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
+import OnboardingPreferencesScreen from '../screens/OnboardingPreferencesScreen';
 import { theme } from '../theme';
 
 export type MainTabParamList = {
@@ -18,6 +21,7 @@ export type MainTabParamList = {
   Chat: undefined;
   Alarms: undefined;
   ContactsStack: undefined;
+  ProfileStack: undefined;
 };
 
 export type ContactsStackParamList = {
@@ -25,8 +29,15 @@ export type ContactsStackParamList = {
   ContactDetail: { contactId?: string };
 };
 
+export type ProfileStackParamList = {
+  Profile: undefined;
+  EditProfile: undefined;
+  OnboardingPreferences: undefined;
+};
+
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const ContactsStack = createNativeStackNavigator<ContactsStackParamList>();
+const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
 
 // Stack Navigator for Contacts (includes ContactsList and ContactDetail)
 const ContactsStackNavigator: React.FC = () => {
@@ -35,6 +46,17 @@ const ContactsStackNavigator: React.FC = () => {
       <ContactsStack.Screen name="ContactsList" component={ContactsScreen} />
       <ContactsStack.Screen name="ContactDetail" component={ContactDetailScreen} />
     </ContactsStack.Navigator>
+  );
+};
+
+// Stack Navigator for Profile (includes Profile, EditProfile, OnboardingPreferences)
+const ProfileStackNavigator: React.FC = () => {
+  return (
+    <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
+      <ProfileStack.Screen name="Profile" component={ProfileScreen} />
+      <ProfileStack.Screen name="EditProfile" component={EditProfileScreen} />
+      <ProfileStack.Screen name="OnboardingPreferences" component={OnboardingPreferencesScreen} />
+    </ProfileStack.Navigator>
   );
 };
 
@@ -112,6 +134,17 @@ const MainNavigator: React.FC = () => {
           ),
         }}
       />
+      <Tab.Screen
+        name="ProfileStack"
+        component={ProfileStackNavigator}
+        options={{
+          headerShown: false,
+          title: 'Perfil',
+          tabBarIcon: ({ color, size }) => (
+            <ProfileIcon color={color} size={size} />
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
 };
@@ -135,6 +168,10 @@ const AlarmIcon = ({ color, size }: { color: string; size: number }) => (
 
 const ContactsIcon = ({ color, size }: { color: string; size: number }) => (
   <Text style={{ fontSize: size, color }}>👥</Text>
+);
+
+const ProfileIcon = ({ color, size }: { color: string; size: number }) => (
+  <Text style={{ fontSize: size, color }}>👤</Text>
 );
 
 export default MainNavigator;

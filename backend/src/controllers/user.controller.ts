@@ -29,16 +29,23 @@ export class UserController {
       },
     });
 
-    // Actualizar preferencias si se proporcionaron
-    if (notificationsEnabled !== undefined || locationEnabled !== undefined) {
-      await prisma.userPreferences.update({
-        where: { userId },
-        data: {
-          ...(notificationsEnabled !== undefined && { pushEnabled: notificationsEnabled }),
-          ...(locationEnabled !== undefined && { locationTrackingEnabled: locationEnabled }),
-        },
-      });
-    }
+    // Actualizar preferencias (upsert para crear si no existen)
+    await prisma.userPreferences.upsert({
+      where: { userId },
+      create: {
+        userId,
+        pushEnabled: notificationsEnabled !== undefined ? notificationsEnabled : true,
+        locationTrackingEnabled: locationEnabled !== undefined ? locationEnabled : true,
+        interests: JSON.stringify(interests || []),
+        favoriteCategories: JSON.stringify(favoriteCategories || []),
+      },
+      update: {
+        ...(notificationsEnabled !== undefined && { pushEnabled: notificationsEnabled }),
+        ...(locationEnabled !== undefined && { locationTrackingEnabled: locationEnabled }),
+        ...(interests && { interests: JSON.stringify(interests) }),
+        ...(favoriteCategories && { favoriteCategories: JSON.stringify(favoriteCategories) }),
+      },
+    });
 
     res.status(HTTP_STATUS.OK).json(
       successResponse({ success: true, user: {
